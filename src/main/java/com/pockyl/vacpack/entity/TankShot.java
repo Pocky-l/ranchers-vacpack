@@ -14,6 +14,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -23,6 +24,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.Vacpack;
@@ -43,6 +46,8 @@ public final class TankShot extends Projectile {
     private static final int MAX_LIFETIME_TICKS = 300;
     /** Below this speed (blocks per tick) on the ground the ragdoll settles. */
     private static final double SETTLE_SPEED = 0.06;
+    /** Ticks the ragdoll lies still before it turns back into the mob (which then gets up). */
+    private static final int SETTLE_TICKS = 8;
     private static final double GRAVITY = 0.04;
     private static final double AIR_DRAG = 0.99;
     private static final double GROUND_FRICTION = 0.8;
@@ -60,16 +65,14 @@ public final class TankShot extends Projectile {
     private int lastHitTick;
     private int slowTicks;
 
-    // Client-only ragdoll pose, in degrees. Pitch (nose up/down) and roll (onto its side) are driven by damped springs
-    // towards a target pose; impacts only add angular velocity, so the body flops smoothly and never snaps or spins.
-    private float pitch;
-    private float pitchO;
-    private float pitchVelocity;
-    private float roll;
-    private float rollO;
-    private float rollVelocity;
-    /** Which side the ragdoll falls onto when sliding: +1 or -1, chosen once per shot. */
-    private float side;
+    // Client-only ragdoll body: orientation and angular velocity (radians per tick) in the yaw-aligned frame, plus the
+    // secondary motion of head and limbs. Previous orientation is kept for interpolation.
+    private final Quaternionf orientation = new Quaternionf();
+    private final Quaternionf orientationO = new Quaternionf();
+    private final Vector3f spin = new Vector3f();
+    private float flail;
+    private float headPitch;
+    private float headPitchVelocity;
 
     /** Client-only: remaining offset to the server position, applied gradually instead of snapping. */
     private Vec3 correction = Vec3.ZERO;
@@ -199,7 +202,7 @@ public final class TankShot extends Projectile {
         boolean slow = onGround() && speed < SETTLE_SPEED;
         slowTicks = slow ? slowTicks + 1 : 0;
         // A short moment of calm on the ground (not exactly zero speed) ends the ragdoll.
-        if (slowTicks >= 3 || isInWater() || tickCount > MAX_LIFETIME_TICKS) {
+        if (slowTicks >= SETTLE_TICKS || isInWater() || tickCount > MAX_LIFETIME_TICKS) {
             release(center(), getDeltaMovement(), false);
         }
     }
@@ -273,62 +276,133 @@ public final class TankShot extends Projectile {
     // Client pose
     // ------------------------------------------------------------------------------------------------
 
-    private static final float SPRING = 0.08F;
-    private static final float DAMPING = 0.8F;
-    private static final float MAX_ANGULAR_SPEED = 12.0F;
+    private static final float AIR_ANGULAR_DRAG = 0.985F;
+    private static final float GROUND_ANGULAR_DRAG = 0.72F;
+    private static final float SETTLE_TORQUE = 0.12F;
+    private static final float MAX_AIR_SPIN = 0.45F;
+    private static final float MAX_GROUND_SPIN = 0.3F;
+    private static final Vector3f[] BODY_AXES = {
+            new Vector3f(1, 0, 0), new Vector3f(-1, 0, 0), new Vector3f(0, 1, 0),
+            new Vector3f(0, -1, 0), new Vector3f(0, 0, 1), new Vector3f(0, 0, -1)};
 
+    /**
+     * Rigid-body tumbling: launches start a gentle somersault, impacts add torque that tips the body over in the
+     * direction of travel (flips, rolls), the ground damps spinning and lets the body fall onto its nearest flat side
+     * (feet, back, belly, side...). Head and limbs move with the tumbling.
+     */
     private void tickPose(double impact) {
-        pitchO = pitch;
-        rollO = roll;
+        orientationO.set(orientation);
         Vec3 velocity = getDeltaMovement();
-        double horizontal = velocity.horizontalDistance();
-        if (tickCount <= 1) {
-            side = random.nextBoolean() ? 1.0F : -1.0F;
-            pitchVelocity = -6.0F;
-        }
+        Vector3f local = new Vector3f((float) velocity.x, (float) velocity.y, (float) velocity.z).rotateY(getYRot() * Mth.DEG_TO_RAD);
+        Vector3f forwardAxis = tumbleAxis(local);
 
-        float pitchTarget;
-        float rollTarget;
-        if (!onGround()) {
-            // In the air the body leans gently with the trajectory.
-            pitchTarget = (float) Mth.clamp(-Math.toDegrees(Math.atan2(velocity.y, horizontal)), -30.0, 30.0) * 0.6F;
-            rollTarget = 0.0F;
-        } else {
-            // Sliding along the ground it lies on its side, getting up as it slows down.
-            pitchTarget = 0.0F;
-            rollTarget = side * 70.0F * (float) Math.min(horizontal / 0.35, 1.0);
+        if (tickCount <= 1) {
+            spin.set(forwardAxis).mul(0.12F).add(randomVector(0.03F));
+            if (getDisplayMob() instanceof LivingEntity living) {
+                // Face the flight direction inside the ragdoll frame.
+                living.yBodyRot = living.yBodyRotO = 0;
+                living.yHeadRot = living.yHeadRotO = 0;
+            }
         }
         if (impact > 0.15) {
-            float strength = (float) Math.min(impact, 1.0);
-            pitchVelocity += strength * 9.0F * (random.nextFloat() - 0.3F);
-            rollVelocity += strength * 7.0F * side;
+            // Friction at the contact point tips the body over along the direction of travel.
+            spin.add(new Vector3f(forwardAxis).mul((float) Math.min(impact, 1.0) * 0.28F)).add(randomVector(0.05F));
+        }
+        if (onGround()) {
+            settleOntoNearestSide();
+            spin.mul(GROUND_ANGULAR_DRAG);
+            double horizontal = Math.sqrt(local.x * local.x + local.z * local.z);
+            if (horizontal > 0.05) {
+                spin.add(new Vector3f(forwardAxis).mul((float) horizontal * 0.08F));
+            }
+            clampLength(spin, MAX_GROUND_SPIN);
+        } else {
+            spin.mul(AIR_ANGULAR_DRAG);
+            clampLength(spin, MAX_AIR_SPIN);
+        }
+        float angle = spin.length();
+        if (angle > 1.0E-5F) {
+            orientation.premul(new Quaternionf().rotationAxis(angle, spin.x / angle, spin.y / angle, spin.z / angle)).normalize();
         }
 
-        pitchVelocity = Mth.clamp((pitchVelocity + (pitchTarget - pitch) * SPRING) * DAMPING, -MAX_ANGULAR_SPEED, MAX_ANGULAR_SPEED);
-        rollVelocity = Mth.clamp((rollVelocity + (rollTarget - roll) * SPRING) * DAMPING, -MAX_ANGULAR_SPEED, MAX_ANGULAR_SPEED);
-        pitch += pitchVelocity;
-        roll += rollVelocity;
+        flail += ((float) Mth.clamp(angle * 3.0 + velocity.length() * 0.8, 0.0, 1.0) - flail) * 0.3F;
+        animateBodyParts();
+    }
 
-        float motion = (float) velocity.length();
-        if (getDisplayMob() instanceof LivingEntity living) {
-            // Limp limbs: a slow, small flail that fades as the ragdoll slows down.
-            living.walkAnimation.update(Mth.clamp(motion * 0.5F, 0.0F, 0.3F), 0.2F);
+    /** Axis around which moving with this velocity tips the body over (top towards the motion). */
+    private static Vector3f tumbleAxis(Vector3f local) {
+        Vector3f horizontal = new Vector3f(local.x, 0, local.z);
+        if (horizontal.lengthSquared() < 1.0E-6F) {
+            return new Vector3f(1, 0, 0);
+        }
+        return new Vector3f(0, 1, 0).cross(horizontal).normalize();
+    }
+
+    /** Gravity on a body lying on the ground: rotate so that the body axis closest to "up" lines up with it. */
+    private void settleOntoNearestSide() {
+        Vector3f up = new Vector3f(0, 1, 0);
+        Vector3f best = null;
+        float bestDot = -2;
+        for (Vector3f axis : BODY_AXES) {
+            Vector3f world = orientation.transform(new Vector3f(axis));
+            float dot = world.dot(up);
+            if (dot > bestDot) {
+                bestDot = dot;
+                best = world;
+            }
+        }
+        Vector3f torque = best.cross(up, new Vector3f());
+        float sin = torque.length();
+        if (sin > 1.0E-4F) {
+            float tilt = (float) Math.acos(Mth.clamp(bestDot, -1.0F, 1.0F));
+            spin.add(torque.mul(tilt * SETTLE_TORQUE / sin));
+        }
+    }
+
+    private void animateBodyParts() {
+        Entity mob = getDisplayMob();
+        if (mob instanceof LivingEntity living) {
+            // Legs and arms flail with the tumbling.
+            living.walkAnimation.update(flail * 0.9F, 0.5F);
             living.tickCount++;
+            living.oAttackAnim = living.attackAnim;
+            living.attackAnim = flail * (0.5F + 0.5F * Mth.sin(tickCount * 0.9F));
+            // The head lags behind the body's rotation and lolls around.
+            float headTarget = Mth.clamp(-spin.x * 140.0F, -60.0F, 60.0F) + Mth.sin(tickCount * 0.45F) * flail * 25.0F;
+            headPitchVelocity = (headPitchVelocity + (headTarget - headPitch) * 0.25F) * 0.7F;
+            headPitch += headPitchVelocity;
+            living.xRotO = living.getXRot();
+            living.setXRot(headPitch);
+            living.yHeadRotO = living.yHeadRot;
+            living.yHeadRot = Mth.sin(tickCount * 0.37F) * flail * 40.0F;
         }
-        if (getDisplayMob() instanceof Slime slime) {
-            // Jelly: squash with the angular motion, smoothly.
+        if (mob instanceof Chicken chicken) {
+            chicken.oFlap = chicken.flap;
+            chicken.oFlapSpeed = chicken.flapSpeed;
+            chicken.flapSpeed = flail;
+            chicken.flap += 1.2F * flail;
+        }
+        if (mob instanceof Slime slime) {
             slime.oSquish = slime.squish;
-            float targetSquish = Mth.clamp((Math.abs(pitchVelocity) + Math.abs(rollVelocity)) / 30.0F, 0.0F, 0.5F);
-            slime.squish += (targetSquish - slime.squish) * 0.3F;
+            float target = Mth.clamp(spin.length() * 1.2F, 0.0F, 0.5F) * (onGround() ? -1.0F : 1.0F);
+            slime.squish += (target - slime.squish) * 0.35F;
         }
     }
 
-    public float getPitch(float partialTick) {
-        return Mth.lerp(partialTick, pitchO, pitch);
+    private Vector3f randomVector(float scale) {
+        return new Vector3f(random.nextFloat() - 0.5F, random.nextFloat() - 0.5F, random.nextFloat() - 0.5F).mul(2 * scale);
     }
 
-    public float getRoll(float partialTick) {
-        return Mth.lerp(partialTick, rollO, roll);
+    private static void clampLength(Vector3f vector, float max) {
+        float length = vector.length();
+        if (length > max) {
+            vector.mul(max / length);
+        }
+    }
+
+    /** Interpolated body orientation in the yaw-aligned frame. */
+    public Quaternionf getOrientation(float partialTick) {
+        return orientationO.slerp(orientation, partialTick, new Quaternionf());
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -357,6 +431,10 @@ public final class TankShot extends Projectile {
             } else {
                 mob.setDeltaMovement(velocity);
                 mob.resetFallDistance();
+                if (mob instanceof LivingEntity living) {
+                    living.setYBodyRot(getYRot());
+                    living.setYHeadRot(getYRot());
+                }
                 mob.hasImpulse = true;
                 mob.hurtMarked = true;
                 mob.setData(ModAttachments.SHOT, shot);

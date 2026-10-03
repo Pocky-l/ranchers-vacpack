@@ -9,6 +9,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -19,12 +20,12 @@ import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.Vacpack;
 import com.pockyl.vacpack.network.CapturePayload;
 import com.pockyl.vacpack.network.VacuumStatePayload;
+import com.pockyl.vacpack.vacuum.VacuumHandler;
 
 /** Client-side suction effects for every vacuuming player in view: humming loop and the swirling particle beam. */
 @EventBusSubscriber(modid = Vacpack.MOD_ID, value = Dist.CLIENT)
 public final class ClientVacuumEffects {
-    private static final int ARMS = 3;
-    private static final int RING_INTERVAL = 5;
+    private static final int RING_INTERVAL = 6;
     private static final int RING_DOTS = 10;
 
     private static final IntSet VACUUMING = new IntOpenHashSet();
@@ -92,8 +93,9 @@ public final class ClientVacuumEffects {
     }
 
     /**
-     * Feeds the suction vortex: wisps and glowing dots on a few rotating spiral arms, small motes racing in close to the
-     * nozzle, and every few ticks a ring that contracts down the funnel, which makes the direction of the airflow obvious.
+     * Seeds the airflow: particles appear in the far part of the suction cone (well away from the player) with a slight
+     * inward drift; from then on {@link VortexParticle} simulates them. Every few ticks a ring of dots is seeded at the
+     * far end, which the forces draw together into the nozzle.
      */
     private static void spawnBeam(ClientLevel level, Player player) {
         if (wispSprites == null || dotSprites == null) {
@@ -101,25 +103,33 @@ public final class ClientVacuumEffects {
         }
         RandomSource random = level.random;
         Minecraft minecraft = Minecraft.getInstance();
-        float maxDistance = (float) Math.min(Config.range(), 12.0) * 0.7F;
-        float phase = level.getGameTime() * 0.35F;
+        double range = Config.range();
+        double far = range * 0.85;
+        double near = Math.min(4.0, far * 0.5);
+        Vec3 look = player.getLookAngle();
+        Vec3 nozzle = VacuumHandler.nozzlePos(player);
+        Vec3 up = Math.abs(look.y) > 0.95 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
+        Vec3 u = look.cross(up).normalize();
+        Vec3 v = look.cross(u).normalize();
 
-        for (int i = 0; i < 4; i++) {
-            // Bias towards the far end so the funnel has a visible mouth.
-            float distance = 1.5F + (maxDistance - 1.5F) * (float) Math.sqrt(random.nextFloat());
-            float angle = phase + (i % ARMS) * Mth.TWO_PI / ARMS + (random.nextFloat() - 0.5F) * 0.4F;
-            boolean wisp = i < 2;
-            minecraft.particleEngine.add(new VortexParticle(level, player, wisp ? wispSprites : dotSprites,
-                    wisp ? VortexParticle.Style.WISP : VortexParticle.Style.DOT, distance, angle));
-        }
-        if (random.nextBoolean()) {
-            minecraft.particleEngine.add(new VortexParticle(level, player, dotSprites, VortexParticle.Style.MOTE,
-                    1.0F + random.nextFloat() * 1.8F, random.nextFloat() * Mth.TWO_PI));
+        for (int i = 0; i < 5; i++) {
+            double distance = near + (far - near) * Math.sqrt(random.nextDouble());
+            double angle = random.nextDouble() * Mth.TWO_PI;
+            double radius = (0.2 + distance * 0.12) * Math.sqrt(random.nextDouble());
+            Vec3 pos = nozzle.add(look.scale(distance)).add(u.scale(Math.cos(angle) * radius)).add(v.scale(Math.sin(angle) * radius));
+            Vec3 velocity = look.scale(-0.08).add(new Vec3(random.nextGaussian(), random.nextGaussian(), random.nextGaussian()).scale(0.01));
+            VortexParticle.Style style = i < 2 ? VortexParticle.Style.WISP : i < 4 ? VortexParticle.Style.DOT : VortexParticle.Style.MOTE;
+            minecraft.particleEngine.add(new VortexParticle(level, player, style == VortexParticle.Style.WISP ? wispSprites : dotSprites,
+                    style, pos, velocity, range));
         }
         if (level.getGameTime() % RING_INTERVAL == 0) {
+            double radius = 0.2 + far * 0.12;
+            double phase = level.getGameTime() * 0.35;
             for (int i = 0; i < RING_DOTS; i++) {
-                minecraft.particleEngine.add(new VortexParticle(level, player, dotSprites, VortexParticle.Style.RING,
-                        maxDistance, phase + i * Mth.TWO_PI / RING_DOTS));
+                double angle = phase + i * Mth.TWO_PI / RING_DOTS;
+                Vec3 pos = nozzle.add(look.scale(far)).add(u.scale(Math.cos(angle) * radius)).add(v.scale(Math.sin(angle) * radius));
+                minecraft.particleEngine.add(new VortexParticle(level, player, dotSprites, VortexParticle.Style.DOT,
+                        pos, look.scale(-0.08), range));
             }
         }
     }

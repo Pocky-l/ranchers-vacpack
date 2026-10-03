@@ -204,7 +204,7 @@ public final class VacuumHandler {
                 }
                 if (center(mob).distanceTo(nozzle) > capture) {
                     pull(mob, nozzle, axis, range);
-                    tumble(mob, 23.0F);
+                    tumble(mob, 9.0F);
                     continue;
                 }
                 VacTank updated = capture(player, tank, mob, slotCount);
