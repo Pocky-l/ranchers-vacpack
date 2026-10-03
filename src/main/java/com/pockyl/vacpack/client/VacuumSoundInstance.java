@@ -1,5 +1,6 @@
 package com.pockyl.vacpack.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
@@ -8,15 +9,20 @@ import com.pockyl.vacpack.registry.ModSounds;
 
 /** The suction hum: follows the player, fades in when vacuuming starts and out when it stops. */
 public final class VacuumSoundInstance extends AbstractTickableSoundInstance {
-    private static final float MAX_VOLUME = 0.55F;
+    private static final float MAX_VOLUME = 0.45F;
     private static final float FADE_IN = 0.14F;
     private static final float FADE_OUT = 0.09F;
 
     private final Player player;
+    private final boolean own;
 
     public VacuumSoundInstance(Player player) {
         super(ModSounds.VACUUM_LOOP.get(), SoundSource.PLAYERS, player.getRandom());
         this.player = player;
+        // The listener sits at the local player's eyes: a source at the same spot has no direction, so OpenAL flips it
+        // between the ears when turning. Play our own vacpack centred instead.
+        this.own = player == Minecraft.getInstance().player;
+        this.relative = own;
         this.looping = true;
         this.delay = 0;
         this.volume = 0.0F;
@@ -48,8 +54,14 @@ public final class VacuumSoundInstance extends AbstractTickableSoundInstance {
     }
 
     private void updatePosition() {
-        x = player.getX();
-        y = player.getEyeY();
-        z = player.getZ();
+        if (own) {
+            x = 0;
+            y = 0;
+            z = 0;
+        } else {
+            x = player.getX();
+            y = player.getEyeY();
+            z = player.getZ();
+        }
     }
 }

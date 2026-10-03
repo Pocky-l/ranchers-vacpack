@@ -141,11 +141,9 @@ public final class VacuumHandler {
         state.harvestTicks = 0;
         if (vacuuming) {
             startFanAnimation(player, player.getMainHandItem(), state);
-            playSound(player, ModSounds.VACUUM_START.get(), 0.6F, 1.0F);
         } else {
             dropHeld(player, state);
             stopFanAnimation(player, state);
-            playSound(player, ModSounds.VACUUM_STOP.get(), 0.5F, 1.0F);
         }
         if (player instanceof ServerPlayer) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new VacuumStatePayload(player.getId(), vacuuming));
@@ -657,8 +655,10 @@ public final class VacuumHandler {
         }
     }
 
+    /** Plays at the nozzle: it stays in front of the player while turning, so the sound does not jump between ears. */
     static void playSound(Player player, SoundEvent sound, float volume, float pitch) {
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(), sound, SoundSource.PLAYERS, volume, pitch);
+        Vec3 at = nozzlePos(player);
+        player.level().playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, pitch);
     }
 
     private static void particles(Player player, ParticleOptions type, Vec3 pos, int count, double spread, double speed) {

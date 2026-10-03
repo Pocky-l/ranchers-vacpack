@@ -5,6 +5,10 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -22,6 +26,7 @@ import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.Vacpack;
 import com.pockyl.vacpack.network.CapturePayload;
 import com.pockyl.vacpack.network.VacuumStatePayload;
+import com.pockyl.vacpack.registry.ModSounds;
 import com.pockyl.vacpack.vacuum.VacuumHandler;
 
 import java.util.Comparator;
@@ -65,14 +70,25 @@ public final class ClientVacuumEffects {
 
     public static void handleState(VacuumStatePayload payload) {
         Minecraft minecraft = Minecraft.getInstance();
+        Player player = minecraft.level != null && minecraft.level.getEntity(payload.playerId()) instanceof Player p ? p : null;
         if (!payload.vacuuming()) {
-            VACUUMING.remove(payload.playerId());
+            if (VACUUMING.remove(payload.playerId()) && player != null) {
+                playMotorSound(minecraft, player, ModSounds.VACUUM_STOP.get(), 0.5F);
+            }
             return;
         }
-        if (VACUUMING.add(payload.playerId()) && minecraft.level != null
-                && minecraft.level.getEntity(payload.playerId()) instanceof Player player) {
+        if (VACUUMING.add(payload.playerId()) && player != null) {
+            playMotorSound(minecraft, player, ModSounds.VACUUM_START.get(), 0.55F);
             minecraft.getSoundManager().play(new VacuumSoundInstance(player));
         }
+    }
+
+    /** Spin-up/down: centred for our own vacpack (see {@link VacuumSoundInstance}), positional for other players. */
+    private static void playMotorSound(Minecraft minecraft, Player player, SoundEvent sound, float volume) {
+        boolean own = player == minecraft.player;
+        minecraft.getSoundManager().play(new SimpleSoundInstance(sound.getLocation(), SoundSource.PLAYERS, volume, 1.0F,
+                player.getRandom(), false, 0, own ? SoundInstance.Attenuation.NONE : SoundInstance.Attenuation.LINEAR,
+                own ? 0 : player.getX(), own ? 0 : player.getEyeY(), own ? 0 : player.getZ(), own));
     }
 
     public static void handleCapture(CapturePayload payload) {

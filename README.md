@@ -64,7 +64,7 @@ the pulse wave can be switched off separately.
 ## Credits
 
 Sound effects are built from CC0 sources: [Kenney](https://kenney.nl)'s Sci-Fi, Impact and Interface sound
-packs, and the OpenGameArt uploads "wind whoosh loop", "Air whoosh", "Swishes Sound Pack" and "100 CC0 SFX".
+packs, and the OpenGameArt uploads "Air whoosh", "Swishes Sound Pack" and "100 CC0 SFX".
 
 ## Building
 
