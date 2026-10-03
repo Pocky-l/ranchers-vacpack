@@ -7,7 +7,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Chicken;
+import net.minecraft.world.entity.animal.Cat;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Slime;
@@ -87,6 +89,30 @@ public final class ModGameTests {
         VacTank tank = vacpack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY);
         helper.assertTrue(tank.slot(0).item().is(Items.SLIME_BALL) && tank.slot(0).count() == 7, "slime balls are stored");
         helper.assertTrue(item.isRemoved(), "the item entity is consumed");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void vacuumTakesBabiesAndCatsButNotAdultCows(GameTestHelper helper) {
+        Player player = player(helper);
+        ItemStack vacpack = player.getMainHandItem();
+        Vec3 nozzle = VacuumHandler.nozzlePos(player);
+        Cow calf = EntityType.COW.create(helper.getLevel());
+        calf.setBaby(true);
+        Cow adult = EntityType.COW.create(helper.getLevel());
+        Cat cat = EntityType.CAT.create(helper.getLevel());
+        for (Mob mob : new Mob[]{calf, adult, cat}) {
+            mob.moveTo(nozzle.x, nozzle.y - mob.getBbHeight() / 2, nozzle.z, 0, 0);
+            mob.setNoAi(true);
+            helper.getLevel().addFreshEntity(mob);
+        }
+
+        VacuumHandler.vacuumTick(player, vacpack);
+
+        helper.assertTrue(calf.isRemoved(), "a calf is vacuumed");
+        helper.assertTrue(cat.isRemoved(), "a cat is vacuumed");
+        helper.assertTrue(!adult.isRemoved(), "an adult cow is too big");
+        adult.discard();
         helper.succeed();
     }
 

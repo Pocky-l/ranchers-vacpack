@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Vacpack: hold right click to vacuum up dropped items and small mobs, left click to shoot them back out.
 - A 4-slot tank that stores up to 64 items or 10 mobs per slot; captured mobs keep their name, health and equipment.
 - Tank HUD with fill gauges next to the hotbar; switch slots with `R` or Sneak + Scroll.
-- Suction vortex: vacuumed things float, swirl and shrink into the nozzle; a particle beam shows the airflow.
+- Suction vortex: vacuumed things float, swirl and shrink into the nozzle; a glowing spiral funnel with contracting
+  rings shows the airflow.
+- Vacuumable mobs include babies of any kind, cats, foxes, wolves, pigs, squids, dolphins, vexes, phantoms and more.
 - Pulse Wave: shooting with an empty slot blasts mobs, items and projectiles away.
 - Shots are ragdolls: they bounce off blocks and mobs, roll and slide until they almost stop, then turn back into
   the mob or item, which keeps its momentum and is briefly protected from damage. Items hit mobs for a little damage

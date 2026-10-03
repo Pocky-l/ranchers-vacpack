@@ -24,11 +24,13 @@ A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs,
 - **Pulse Wave** — shooting with an empty slot releases a blast of air that knocks back mobs, items and projectiles.
 - **Harvesting** — aim at a ripe sweet berry bush or glow berry vine while vacuuming to pull the berries off.
 - **Slot selection** — `R` (rebindable) or *Sneak + Scroll*. The tank is shown next to the hotbar.
-- **Vacuumable mobs** — small slimes and magma cubes, chickens, rabbits, frogs, tadpoles, bees, allays, axolotls,
-  silverfish, endermites, bats, parrots, fish and armadillos. Big slimes, leashed mobs, riders and other players' pets
-  cannot be vacuumed.
+- **Vacuumable mobs** — baby mobs of any kind (calves, piglets, baby villagers, baby zombies...), small slimes and
+  magma cubes, chickens, rabbits, pigs, cats, ocelots, foxes, wolves, parrots, frogs, tadpoles, bees, allays, axolotls,
+  squids, dolphins, fish, armadillos, bats, vexes, phantoms, cave spiders, silverfish and endermites. Big slimes,
+  leashed mobs, riders and other players' pets cannot be vacuumed.
 - Animated model: the core idles and spins up while vacuuming, the gun kicks back on shots and pulse waves, the
   nozzle gulps and the tank bulges on every capture, and the body clacks when switching slots.
+- A glowing swirling vortex shows the airflow while vacuuming.
 - Custom sounds and particles: motor spin-up, suction rush and spin-down, capture plops and slime squelches,
   air-cannon shots, pulse wave boom, landing thumps, slot clicks; air wisps, capture rings and shot puffs.
 - HUD with a fill gauge per slot.

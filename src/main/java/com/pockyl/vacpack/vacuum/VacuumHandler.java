@@ -269,7 +269,7 @@ public final class VacuumHandler {
     public static boolean canVacuumMob(Player player, Mob mob) {
         double maxSize = Config.maxMobSize();
         return mob.isAlive()
-                && mob.getType().is(ModTags.VACUUMABLE)
+                && (mob.getType().is(ModTags.VACUUMABLE) || mob.isBaby() && Config.vacuumBabies())
                 && mob.getBbWidth() <= maxSize && mob.getBbHeight() <= maxSize
                 && isFree(player, mob)
                 && !recentlyShot(mob);

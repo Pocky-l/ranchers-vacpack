@@ -16,6 +16,7 @@ public final class Config {
     private static final ModConfigSpec.BooleanValue VACUUM_ITEMS;
     private static final ModConfigSpec.BooleanValue VACUUM_MOBS;
     private static final ModConfigSpec.DoubleValue MAX_MOB_SIZE;
+    private static final ModConfigSpec.BooleanValue VACUUM_BABIES;
     private static final ModConfigSpec.BooleanValue HARVEST_BERRIES;
     private static final ModConfigSpec.BooleanValue HOLD_MOBS;
     private static final ModConfigSpec.DoubleValue MAX_HOLD_SIZE;
@@ -56,6 +57,9 @@ public final class Config {
         MAX_MOB_SIZE = BUILDER.translation(key("max_mob_size"))
                 .comment("Mobs wider or taller than this (in blocks) cannot be vacuumed, e.g. big slimes.")
                 .defineInRange("maxMobSize", 1.0, 0.1, 4.0);
+        VACUUM_BABIES = BUILDER.translation(key("vacuum_babies"))
+                .comment("Whether baby mobs of any kind (calves, piglets, baby villagers, baby zombies...) can be vacuumed.")
+                .define("vacuumBabies", true);
         HARVEST_BERRIES = BUILDER.translation(key("harvest_berries"))
                 .comment("Whether aiming the vacpack at ripe sweet berry bushes and glow berry vines picks their berries.")
                 .define("harvestBerries", true);
@@ -146,6 +150,10 @@ public final class Config {
 
     public static double maxMobSize() {
         return get(MAX_MOB_SIZE);
+    }
+
+    public static boolean vacuumBabies() {
+        return get(VACUUM_BABIES);
     }
 
     public static boolean harvestBerries() {

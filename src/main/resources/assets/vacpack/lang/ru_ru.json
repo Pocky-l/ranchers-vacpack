@@ -40,5 +40,6 @@
   "entity.vacpack.tank_shot": "Выстрел вакпака",
   "subtitles.vacpack.vacuum_start": "Вакпак раскручивается",
   "subtitles.vacpack.vacuum_stop": "Вакпак затихает",
-  "subtitles.vacpack.land": "Что-то приземляется"
+  "subtitles.vacpack.land": "Что-то приземляется",
+  "vacpack.configuration.vacuum_babies": "Всасывать детёнышей"
 }

@@ -17,6 +17,18 @@
     "minecraft:salmon",
     "minecraft:tropical_fish",
     "minecraft:pufferfish",
-    "minecraft:armadillo"
+    "minecraft:armadillo",
+    "minecraft:cat",
+    "minecraft:ocelot",
+    "minecraft:fox",
+    "minecraft:wolf",
+    "minecraft:pig",
+    "minecraft:squid",
+    "minecraft:glow_squid",
+    "minecraft:dolphin",
+    "minecraft:turtle",
+    "minecraft:vex",
+    "minecraft:phantom",
+    "minecraft:cave_spider"
   ]
 }
