@@ -9,6 +9,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.vacuum.VacuumHandler;
 
 /**
@@ -31,7 +32,11 @@ public final class VortexParticle extends TextureSheetParticle {
     private static final int FULL_BRIGHT = 0xF000F0;
     private static final double PULL_FAR = 0.05;
     private static final double PULL_NEAR = 0.15;
-    private static final double AXIS_PULL = 0.04;
+    private static final double AXIS_PULL = 0.02;
+    /** Within this distance of the nozzle the suction pulls from every direction. */
+    private static final double ALL_AROUND = 1.5;
+    /** Ticks outside the suction cone after which a particle is let go (e.g. after the player turned away). */
+    private static final int OUT_OF_CONE_TICKS = 6;
     private static final double SWIRL = 0.015;
     private static final double DRAG = 0.86;
     private static final double RELEASED_DRAG = 0.9;
@@ -46,6 +51,7 @@ public final class VortexParticle extends TextureSheetParticle {
     private final float spin;
     private boolean released;
     private int releasedAt;
+    private int outOfCone;
     private float swallowFade = 1.0F;
 
     public VortexParticle(ClientLevel level, Player player, SpriteSet sprites, Style style, Vec3 pos, Vec3 velocity, double range) {
@@ -114,13 +120,20 @@ public final class VortexParticle extends TextureSheetParticle {
             }
             double closeness = 1.0 - Math.min(distance / range, 1.0);
             Vec3 fromNozzle = pos.subtract(nozzle);
+            // Suction only acts in front of the nozzle: full strength inside the cone, fading out past its edge.
+            float field = distance < ALL_AROUND ? 1.0F : coneFactor(fromNozzle.scale(1.0 / distance).dot(axis));
+            outOfCone = field > 0 ? 0 : outOfCone + 1;
+            if (outOfCone > OUT_OF_CONE_TICKS) {
+                released = true;
+                releasedAt = age;
+            }
             Vec3 radial = fromNozzle.subtract(axis.scale(fromNozzle.dot(axis)));
             Vec3 acceleration = toNozzle.scale((PULL_FAR + PULL_NEAR * closeness * closeness) / distance)
                     .subtract(radial.scale(AXIS_PULL));
             if (radial.lengthSqr() > 1.0E-4) {
                 acceleration = acceleration.add(axis.cross(radial).normalize().scale(SWIRL * Math.min(radial.length(), 1.5)));
             }
-            velocity = velocity.scale(DRAG).add(acceleration);
+            velocity = velocity.scale(released ? RELEASED_DRAG : DRAG + (1 - DRAG) * (1 - field)).add(acceleration.scale(field));
             // Fade out just before being swallowed, so nothing pops into the camera.
             swallowFade = (float) Mth.clamp((distance - SWALLOW_DISTANCE) / 1.2, 0.0, 1.0);
         } else {
@@ -147,6 +160,14 @@ public final class VortexParticle extends TextureSheetParticle {
         float releaseFade = released ? 1.0F - (age - releasedAt) / (float) FADE_AFTER_RELEASE : 1.0F;
         setAlpha(baseAlpha * fadeIn * swallowFade * Math.max(releaseFade, 0.0F));
         quadSize = baseSize * (0.55F + 0.45F * swallowFade);
+    }
+
+    /** 1 inside the suction cone, falling to 0 a bit outside of it. */
+    private static float coneFactor(double cosAngle) {
+        double cone = Math.toRadians(Config.coneAngle());
+        double full = Math.cos(cone * 0.9);
+        double edge = Math.cos(Math.min(cone * 1.5, Math.PI / 2));
+        return (float) Mth.clamp((cosAngle - edge) / (full - edge), 0.0, 1.0);
     }
 
     @Override

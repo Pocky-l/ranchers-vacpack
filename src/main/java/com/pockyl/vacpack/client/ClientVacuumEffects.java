@@ -8,6 +8,8 @@ import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -22,11 +24,15 @@ import com.pockyl.vacpack.network.CapturePayload;
 import com.pockyl.vacpack.network.VacuumStatePayload;
 import com.pockyl.vacpack.vacuum.VacuumHandler;
 
+import java.util.Comparator;
+import java.util.List;
+
 /** Client-side suction effects for every vacuuming player in view: humming loop and the swirling particle beam. */
 @EventBusSubscriber(modid = Vacpack.MOD_ID, value = Dist.CLIENT)
 public final class ClientVacuumEffects {
     private static final int RING_INTERVAL = 6;
     private static final int RING_DOTS = 10;
+    private static final int MAX_WIND_ENTITIES = 8;
 
     private static final IntSet VACUUMING = new IntOpenHashSet();
     private static SpriteSet wispSprites;
@@ -87,6 +93,45 @@ public final class ClientVacuumEffects {
         }
     }
 
+    /**
+     * Wind streaks around every mob and item caught in the airflow (including a mob held in the stream): they start on a
+     * ring around the entity, move with it and are then drawn past it into the nozzle.
+     */
+    private static void spawnWindAroundEntities(ClientLevel level, Player player, double range, Vec3 look) {
+        RandomSource random = level.random;
+        Minecraft minecraft = Minecraft.getInstance();
+        Vec3 eye = player.getEyePosition();
+        double minDot = Math.cos(Math.toRadians(Config.coneAngle()));
+        List<Entity> caught = level.getEntities(player, player.getBoundingBox().inflate(range), entity -> {
+            if (!(entity instanceof Mob || entity instanceof ItemEntity) || !entity.isAlive()) {
+                return false;
+            }
+            Vec3 toEntity = entity.getBoundingBox().getCenter().subtract(eye);
+            double distance = toEntity.length();
+            return distance <= range && distance > 0.5 && toEntity.scale(1.0 / distance).dot(look) >= minDot;
+        });
+        caught.sort(Comparator.comparingDouble(player::distanceToSqr));
+        for (Entity entity : caught.subList(0, Math.min(caught.size(), MAX_WIND_ENTITIES))) {
+            Vec3 center = entity.getBoundingBox().getCenter();
+            Vec3 toEye = eye.subtract(center).normalize();
+            Vec3 up = Math.abs(toEye.y) > 0.95 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
+            Vec3 a = toEye.cross(up).normalize();
+            Vec3 b = toEye.cross(a).normalize();
+            double radius = entity.getBbWidth() * 0.6 + 0.25;
+            int count = entity instanceof ItemEntity ? 1 : 2;
+            for (int i = 0; i < count; i++) {
+                double angle = random.nextDouble() * Mth.TWO_PI;
+                // Start slightly behind the entity (as seen from the player) so the stream wraps around it.
+                Vec3 pos = center.add(a.scale(Math.cos(angle) * radius)).add(b.scale(Math.sin(angle) * radius))
+                        .subtract(toEye.scale(entity.getBbWidth() * 0.4));
+                Vec3 velocity = entity.getDeltaMovement().add(toEye.scale(0.12));
+                boolean wisp = random.nextBoolean();
+                minecraft.particleEngine.add(new VortexParticle(level, player, wisp ? wispSprites : dotSprites,
+                        wisp ? VortexParticle.Style.WISP : VortexParticle.Style.DOT, pos, velocity, range));
+            }
+        }
+    }
+
     @SubscribeEvent
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         VACUUMING.clear();
@@ -122,6 +167,7 @@ public final class ClientVacuumEffects {
             minecraft.particleEngine.add(new VortexParticle(level, player, style == VortexParticle.Style.WISP ? wispSprites : dotSprites,
                     style, pos, velocity, range));
         }
+        spawnWindAroundEntities(level, player, range, look);
         if (level.getGameTime() % RING_INTERVAL == 0) {
             double radius = 0.2 + far * 0.12;
             double phase = level.getGameTime() * 0.35;
