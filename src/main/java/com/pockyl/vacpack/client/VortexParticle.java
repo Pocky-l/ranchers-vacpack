@@ -35,8 +35,8 @@ public final class VortexParticle extends TextureSheetParticle {
     private static final double AXIS_PULL = 0.02;
     /** Within this distance of the nozzle the suction pulls from every direction. */
     private static final double ALL_AROUND = 1.5;
-    /** Ticks outside the suction cone after which a particle is let go (e.g. after the player turned away). */
-    private static final int OUT_OF_CONE_TICKS = 6;
+    /** Drag on sideways motion for particles outside the cone (e.g. right after the player turned). */
+    private static final double SIDE_DRAG_OUTSIDE = 0.6;
     private static final double SWIRL = 0.015;
     private static final double DRAG = 0.86;
     private static final double RELEASED_DRAG = 0.9;
@@ -51,7 +51,6 @@ public final class VortexParticle extends TextureSheetParticle {
     private final float spin;
     private boolean released;
     private int releasedAt;
-    private int outOfCone;
     private float swallowFade = 1.0F;
 
     public VortexParticle(ClientLevel level, Player player, SpriteSet sprites, Style style, Vec3 pos, Vec3 velocity, double range) {
@@ -119,21 +118,24 @@ public final class VortexParticle extends TextureSheetParticle {
                 return;
             }
             double closeness = 1.0 - Math.min(distance / range, 1.0);
+            Vec3 direction = toNozzle.scale(1.0 / distance);
             Vec3 fromNozzle = pos.subtract(nozzle);
-            // Suction only acts in front of the nozzle: full strength inside the cone, fading out past its edge.
-            float field = distance < ALL_AROUND ? 1.0F : coneFactor(fromNozzle.scale(1.0 / distance).dot(axis));
-            outOfCone = field > 0 ? 0 : outOfCone + 1;
-            if (outOfCone > OUT_OF_CONE_TICKS) {
-                released = true;
-                releasedAt = age;
-            }
+            // The nozzle always pulls. Swirl and the pull towards the aim axis only act inside the cone, so turning the
+            // camera never drags particles sideways towards the new axis.
+            float field = distance < ALL_AROUND ? 1.0F : coneFactor(-direction.dot(axis));
+            Vec3 acceleration = direction.scale(PULL_FAR + PULL_NEAR * closeness * closeness);
             Vec3 radial = fromNozzle.subtract(axis.scale(fromNozzle.dot(axis)));
-            Vec3 acceleration = toNozzle.scale((PULL_FAR + PULL_NEAR * closeness * closeness) / distance)
-                    .subtract(radial.scale(AXIS_PULL));
+            Vec3 shaping = radial.scale(-AXIS_PULL);
             if (radial.lengthSqr() > 1.0E-4) {
-                acceleration = acceleration.add(axis.cross(radial).normalize().scale(SWIRL * Math.min(radial.length(), 1.5)));
+                shaping = shaping.add(axis.cross(radial).normalize().scale(SWIRL * Math.min(radial.length(), 1.5)));
             }
-            velocity = velocity.scale(released ? RELEASED_DRAG : DRAG + (1 - DRAG) * (1 - field)).add(acceleration.scale(field));
+            acceleration = acceleration.add(shaping.scale(field));
+            // Drag along the line to the nozzle is mild; sideways motion is damped harder (much harder outside the
+            // cone), so particles quickly turn towards the gun instead of drifting off on old momentum.
+            double along = velocity.dot(direction);
+            Vec3 sideways = velocity.subtract(direction.scale(along));
+            double sideDrag = DRAG - (DRAG - SIDE_DRAG_OUTSIDE) * (1 - field);
+            velocity = direction.scale(along * DRAG).add(sideways.scale(sideDrag)).add(acceleration);
             // Fade out just before being swallowed, so nothing pops into the camera.
             swallowFade = (float) Mth.clamp((distance - SWALLOW_DISTANCE) / 1.2, 0.0, 1.0);
         } else {
