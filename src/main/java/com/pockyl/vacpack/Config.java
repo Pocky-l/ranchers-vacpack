@@ -37,7 +37,7 @@ public final class Config {
         BUILDER.translation(key("vacuum")).push("vacuum");
         RANGE = BUILDER.translation(key("range"))
                 .comment("How far the vacpack reaches, in blocks.")
-                .defineInRange("range", 10.0, 2.0, 32.0);
+                .defineInRange("range", 14.0, 2.0, 32.0);
         CONE_ANGLE = BUILDER.translation(key("cone_angle"))
                 .comment("Half-angle of the suction cone, in degrees.")
                 .defineInRange("coneAngle", 30, 5, 90);

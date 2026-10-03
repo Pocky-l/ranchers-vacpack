@@ -421,7 +421,7 @@ public final class VacuumHandler {
         }
         TankShot shot = TankShot.ofMob(player.level(), player, data);
         Vec3 from = center(held);
-        shot.moveTo(from.x, from.y - shot.getBbHeight() / 2, from.z, player.getYRot(), 0);
+        placeShot(player, shot, from);
         shot.setDeltaMovement(player.getLookAngle().scale(Config.shootSpeed() * 0.9).add(0, 0.08, 0));
         held.discard();
         player.level().addFreshEntity(shot);
@@ -497,13 +497,24 @@ public final class VacuumHandler {
                 ? TankShot.ofMob(level, player, taken.mob())
                 : TankShot.ofItem(level, player, taken.item());
         Vec3 origin = safeNozzlePos(player);
-        shot.moveTo(origin.x, origin.y - shot.getBbHeight() / 2, origin.z, player.getYRot(), 0);
+        placeShot(player, shot, origin);
         shot.setDeltaMovement(player.getLookAngle().scale(Config.shootSpeed()).add(0, 0.06, 0));
         level.addFreshEntity(shot);
 
         stack.set(ModDataComponents.TANK, taken.tank());
         shotEffects(player, stack, origin);
         return Config.shootCooldown();
+    }
+
+    /** Centres a shot on {@code center}, pulled back towards the player's eyes until it does not overlap blocks. */
+    private static void placeShot(Player player, TankShot shot, Vec3 center) {
+        Vec3 eye = player.getEyePosition();
+        Vec3 pos = center;
+        shot.moveTo(pos.x, pos.y - shot.getBbHeight() / 2, pos.z, player.getYRot(), 0);
+        for (int i = 0; i < 8 && !player.level().noCollision(shot); i++) {
+            pos = pos.lerp(eye, 0.25);
+            shot.setPos(pos.x, pos.y - shot.getBbHeight() / 2, pos.z);
+        }
     }
 
     private static void shotEffects(Player player, ItemStack stack, Vec3 origin) {

@@ -12,8 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tank HUD with fill gauges next to the hotbar; switch slots with `R` or Sneak + Scroll.
 - Suction vortex: vacuumed things float, swirl and shrink into the nozzle; a particle beam shows the airflow.
 - Pulse Wave: shooting with an empty slot blasts mobs, items and projectiles away.
-- Shots fly as smooth projectiles; shot mobs flail like ragdolls and recover upright after landing; items hit mobs
-  for a little damage and knockback.
+- Shots are ragdolls: they bounce off blocks and mobs, roll and slide until they almost stop, then turn back into
+  the mob or item, which keeps its momentum and is briefly protected from damage. Items hit mobs for a little damage
+  and knockback.
 - Air stream holding: mobs that do not fit into the tank float in front of the nozzle and can be launched.
 - Vacuum ripe sweet berries and glow berries right off the plant.
 - Animated GeckoLib model: idle and vacuum spin, recoil, pulse kick, capture gulp, slot switch clack.

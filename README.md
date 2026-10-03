@@ -16,7 +16,8 @@ A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs,
 - **Tank** — 4 slots; each slot holds one kind of item (up to 64) or one kind of mob (up to 10).
   Captured mobs keep everything: name, health, equipment.
 - **Shoot** — press *Attack* (left click) to launch one item or mob from the selected slot; hold it to fire continuously.
-  Shots fly smoothly; mobs flail like ragdolls, somersault and settle back on their feet when they land.
+  Shots behave like ragdolls: they fly, bounce off walls, floors and mobs, roll and slide, and only turn back
+  into a mob or item once they have almost stopped; mobs then get back on their feet, briefly invulnerable.
   Items smack into mobs for a little damage and knockback, mobs land unharmed.
 - **Air stream holding** — mobs that do not fit into the tank (big slimes, cows, zombies...) float in front of the
   nozzle while you vacuum and follow your aim. Shoot to launch them, let go to drop them. Bosses cannot be held.

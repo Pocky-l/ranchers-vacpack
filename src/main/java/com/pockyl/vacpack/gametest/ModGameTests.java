@@ -134,6 +134,38 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void ragdollBouncesRollsAndSettles(GameTestHelper helper) {
+        Player player = player(helper);
+        for (int x = -1; x <= 8; x++) {
+            for (int z = -2; z <= 2; z++) {
+                helper.setBlock(x, 1, z, Blocks.STONE);
+            }
+        }
+        CompoundTag chicken = new CompoundTag();
+        chicken.putString("id", "minecraft:chicken");
+        TankShot shot = TankShot.ofMob(helper.getLevel(), player, chicken);
+        Vec3 start = helper.absoluteVec(new Vec3(0.5, 4.0, 0.5));
+        shot.moveTo(start.x, start.y, start.z, 0, 0);
+        shot.setDeltaMovement(0.35, -0.6, 0);
+        helper.getLevel().addFreshEntity(shot);
+
+        boolean bounced = false;
+        for (int i = 0; i < 200 && shot.isAlive(); i++) {
+            shot.tick();
+            bounced |= shot.isAlive() && shot.getDeltaMovement().y > 0;
+        }
+
+        helper.assertTrue(bounced, "the ragdoll bounces off the floor");
+        helper.assertTrue(shot.isRemoved(), "the ragdoll settles once it has almost stopped");
+        AABB area = new AABB(helper.absolutePos(new BlockPos(0, 2, 0))).inflate(10);
+        var released = helper.getLevel().getEntitiesOfClass(Chicken.class, area, Chicken::isAlive);
+        helper.assertTrue(released.size() == 1, "the chicken stands up where the ragdoll stopped");
+        helper.assertTrue(released.getFirst().getX() > start.x + 0.5, "it slid forward with its momentum");
+        released.forEach(Chicken::discard);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
     public static void releasedMobKeepsMomentumAndIsProtected(GameTestHelper helper) {
         Player player = player(helper);
         CompoundTag chicken = new CompoundTag();
@@ -248,12 +280,11 @@ public final class ModGameTests {
         shot.setDeltaMovement(1.2, 0, 0);
         helper.getLevel().addFreshEntity(shot);
 
-        for (int i = 0; i < 4 && shot.isAlive(); i++) {
-            shot.tick();
-        }
+        shot.tick();
 
         helper.assertTrue(cow.getHealth() < cow.getMaxHealth(), "the cow takes damage");
-        helper.assertTrue(shot.isRemoved(), "the shot turns back into an item on impact");
+        helper.assertTrue(shot.isAlive() && shot.getDeltaMovement().x < 0, "the shot bounces off the cow and keeps tumbling");
+        shot.release(shot.position(), shot.getDeltaMovement(), false);
         AABB area = new AABB(cow.blockPosition()).inflate(3);
         helper.assertTrue(!helper.getLevel().getEntitiesOfClass(ItemEntity.class, area, e -> e.getItem().is(Items.COBBLESTONE)).isEmpty(),
                 "the cobblestone drops");
