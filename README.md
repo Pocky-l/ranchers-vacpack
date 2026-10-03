@@ -16,8 +16,8 @@ A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs,
 - **Tank** — 4 slots; each slot holds one kind of item (up to 64) or one kind of mob (up to 10).
   Captured mobs keep everything: name, health, equipment.
 - **Shoot** — press *Attack* (left click) to launch one item or mob from the selected slot; hold it to fire continuously.
-  Shots fly smoothly and tumble through the air; items smack into mobs for a little damage and knockback,
-  mobs land unharmed.
+  Shots fly smoothly; mobs flail like ragdolls, somersault and settle back on their feet when they land.
+  Items smack into mobs for a little damage and knockback, mobs land unharmed.
 - **Air stream holding** — mobs that do not fit into the tank (big slimes, cows, zombies...) float in front of the
   nozzle while you vacuum and follow your aim. Shoot to launch them, let go to drop them. Bosses cannot be held.
 - **Pulse Wave** — shooting with an empty slot releases a blast of air that knocks back mobs, items and projectiles.
@@ -26,9 +26,10 @@ A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs,
 - **Vacuumable mobs** — small slimes and magma cubes, chickens, rabbits, frogs, tadpoles, bees, allays, axolotls,
   silverfish, endermites, bats, parrots, fish and armadillos. Big slimes, leashed mobs, riders and other players' pets
   cannot be vacuumed.
-- Animated model: the drum spins while vacuuming and the gun kicks back on every shot.
-- Custom sounds and particles: motor hum, capture bloops and slime squelches, air-cannon shots, pulse wave boom,
-  slot clicks, air wisps, capture rings and shot puffs.
+- Animated model: the core idles and spins up while vacuuming, the gun kicks back on shots and pulse waves, the
+  nozzle gulps and the tank bulges on every capture, and the body clacks when switching slots.
+- Custom sounds and particles: motor spin-up, suction rush and spin-down, capture plops and slime squelches,
+  air-cannon shots, pulse wave boom, landing thumps, slot clicks; air wisps, capture rings and shot puffs.
 - HUD with a fill gauge per slot.
 - Sneak + use on a block still opens chests, doors and other blocks while holding the vacpack.
 
@@ -56,7 +57,8 @@ the pulse wave can be switched off separately.
 
 ## Credits
 
-Sound effects are built from [Kenney](https://kenney.nl)'s Sci-Fi, Impact and Interface sound packs (CC0).
+Sound effects are built from CC0 sources: [Kenney](https://kenney.nl)'s Sci-Fi, Impact and Interface sound
+packs, and the OpenGameArt uploads "wind whoosh loop", "Air whoosh", "Swishes Sound Pack" and "100 CC0 SFX".
 
 ## Building
 

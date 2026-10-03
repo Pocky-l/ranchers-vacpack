@@ -37,5 +37,8 @@
   "subtitles.vacpack.harvest": "Fruit pops off",
   "vacpack.configuration.hold_mobs": "Hold Mobs in Air Stream",
   "vacpack.configuration.max_hold_size": "Max Held Mob Size",
-  "entity.vacpack.tank_shot": "Vacpack Shot"
+  "entity.vacpack.tank_shot": "Vacpack Shot",
+  "subtitles.vacpack.vacuum_start": "Vacpack spins up",
+  "subtitles.vacpack.vacuum_stop": "Vacpack winds down",
+  "subtitles.vacpack.land": "Something lands"
 }

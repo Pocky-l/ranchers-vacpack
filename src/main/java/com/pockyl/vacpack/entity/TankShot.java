@@ -1,15 +1,17 @@
 package com.pockyl.vacpack.entity;
 
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.item.ItemStack;
@@ -17,11 +19,15 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.Vacpack;
 import com.pockyl.vacpack.registry.ModAttachments;
+import com.pockyl.vacpack.network.ShotLandedPayload;
 import com.pockyl.vacpack.registry.ModEntities;
+import com.pockyl.vacpack.registry.ModParticles;
+import com.pockyl.vacpack.registry.ModSounds;
 import com.pockyl.vacpack.vacuum.Shot;
 
 /**
@@ -36,6 +42,16 @@ public final class TankShot extends ThrowableProjectile {
 
     /** Client-only render copy of the carried mob, created lazily from {@link #MOB}. */
     private Entity displayMob;
+
+    // Client-only "ragdoll" pose, in degrees: a damped somersault, a decaying side wobble and the body pitch
+    // following the trajectory. Previous-tick values are kept for interpolation.
+    private float flip;
+    private float flipO;
+    private float flipSpeed;
+    private float wobble;
+    private float wobbleO;
+    private float aim;
+    private float aimO;
 
     public TankShot(EntityType<? extends TankShot> type, Level level) {
         super(type, level);
@@ -88,9 +104,60 @@ public final class TankShot extends ThrowableProjectile {
     @Override
     public void tick() {
         super.tick();
-        if (!level().isClientSide() && isAlive() && tickCount > MAX_FLIGHT_TICKS) {
-            release(position(), getDeltaMovement().scale(0.3));
+        if (level().isClientSide()) {
+            tickPose();
+        } else if (isAlive() && tickCount > MAX_FLIGHT_TICKS) {
+            release(center(), getDeltaMovement().scale(0.3), false);
         }
+    }
+
+    private void tickPose() {
+        flipO = flip;
+        wobbleO = wobble;
+        aimO = aim;
+        if (tickCount <= 1) {
+            flipSpeed = (random.nextBoolean() ? 1 : -1) * (14.0F + random.nextFloat() * 8.0F);
+        }
+        flip += flipSpeed;
+        flipSpeed *= 0.86F;
+        wobble = 16.0F * Mth.sin(tickCount * 0.75F) * (float) Math.exp(-tickCount / 14.0);
+        Vec3 velocity = getDeltaMovement();
+        float target = (float) Mth.clamp(-Math.toDegrees(Math.atan2(velocity.y, velocity.horizontalDistance())), -55.0, 55.0);
+        aim += (target - aim) * 0.25F;
+
+        if (getDisplayMob() instanceof LivingEntity living) {
+            // Limbs flail as if running in the air.
+            living.walkAnimation.update(1.2F, 0.6F);
+            living.tickCount++;
+        }
+        if (getDisplayMob() instanceof Slime slime) {
+            slime.oSquish = slime.squish;
+            slime.squish = 0.45F * Mth.sin(tickCount * 0.9F) * (float) Math.exp(-tickCount / 18.0);
+        }
+    }
+
+    public float getFlip(float partialTick) {
+        return Mth.lerp(partialTick, flipO, flip);
+    }
+
+    public float getWobble(float partialTick) {
+        return Mth.lerp(partialTick, wobbleO, wobble);
+    }
+
+    public float getAim(float partialTick) {
+        return Mth.lerp(partialTick, aimO, aim);
+    }
+
+    // The client simulates the flight itself; snapping to slightly stale server positions is what made shots jitter.
+    @Override
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        if (position().distanceToSqr(x, y, z) > 4.0) {
+            super.lerpTo(x, y, z, yRot, xRot, steps);
+        }
+    }
+
+    private Vec3 center() {
+        return position().add(0, getBbHeight() / 2, 0);
     }
 
     @Override
@@ -104,7 +171,7 @@ public final class TankShot extends ThrowableProjectile {
             target.hurt(damageSources().thrown(this, getOwner()), (float) Config.shotDamage());
         }
         target.knockback(carriesMob() ? 0.9 : 0.6, -velocity.x, -velocity.z);
-        release(position().subtract(velocity.normalize().scale(0.4)), velocity.scale(-0.15).add(0, 0.2, 0));
+        release(center().subtract(velocity.normalize().scale(0.4)), velocity.scale(-0.15).add(0, 0.2, 0), true);
     }
 
     @Override
@@ -117,11 +184,16 @@ public final class TankShot extends ThrowableProjectile {
         Vec3 velocity = getDeltaMovement();
         // Bounce off the surface a little.
         Vec3 bounce = velocity.subtract(normal.scale(2 * velocity.dot(normal))).scale(0.25);
-        release(result.getLocation().add(normal.scale(0.3)), bounce);
+        release(result.getLocation().add(normal.scale(0.3)), bounce, true);
     }
 
-    /** Replaces this projectile with its payload. */
-    public void release(Vec3 pos, Vec3 velocity) {
+    /**
+     * Replaces this projectile with its payload.
+     *
+     * @param pos      centre of the released entity
+     * @param impact   whether it hit something (plays the landing thump)
+     */
+    public void release(Vec3 pos, Vec3 velocity, boolean impact) {
         if (!(level() instanceof ServerLevel level) || !isAlive()) {
             return;
         }
@@ -139,6 +211,8 @@ public final class TankShot extends ThrowableProjectile {
                 mob.resetFallDistance();
                 mob.setData(ModAttachments.SHOT, shot);
                 level.addFreshEntity(mob);
+                // Lets clients ease the mob out of its mid-air pose instead of snapping upright.
+                PacketDistributor.sendToPlayersTrackingEntity(this, new ShotLandedPayload(getId(), mob.getId()));
             }
         } else if (!getItem().isEmpty()) {
             ItemEntity item = new ItemEntity(level, pos.x, pos.y, pos.z, getItem(), velocity.x, velocity.y, velocity.z);
@@ -146,7 +220,11 @@ public final class TankShot extends ThrowableProjectile {
             item.setData(ModAttachments.SHOT, shot);
             level.addFreshEntity(item);
         }
-        level.sendParticles(ParticleTypes.POOF, pos.x, pos.y, pos.z, 3, 0.1, 0.1, 0.1, 0.02);
+        level.sendParticles(ModParticles.SHOT_PUFF.get(), pos.x, pos.y, pos.z, 3, 0.15, 0.1, 0.15, 0.02);
+        if (impact) {
+            level.playSound(null, pos.x, pos.y, pos.z, ModSounds.LAND.get(), SoundSource.NEUTRAL,
+                    carriesMob() ? 0.8F : 0.4F, 0.9F + random.nextFloat() * 0.3F);
+        }
         discard();
     }
 

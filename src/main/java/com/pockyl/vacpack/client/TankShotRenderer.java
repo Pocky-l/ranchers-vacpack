@@ -14,9 +14,12 @@ import net.minecraft.world.item.ItemDisplayContext;
 
 import com.pockyl.vacpack.entity.TankShot;
 
-/** Draws the carried item or mob, tumbling through the air. */
+/**
+ * Draws the carried mob like a ragdoll: facing the flight direction, pitched along the trajectory, with a damped
+ * somersault and side wobble computed by {@link TankShot}. Items simply spin.
+ */
 public final class TankShotRenderer extends EntityRenderer<TankShot> {
-    private static final float SPIN_DEGREES_PER_TICK = 25.0F;
+    private static final float ITEM_SPIN_PER_TICK = 18.0F;
 
     private final ItemRenderer itemRenderer;
 
@@ -28,20 +31,20 @@ public final class TankShotRenderer extends EntityRenderer<TankShot> {
 
     @Override
     public void render(TankShot shot, float entityYaw, float partialTick, PoseStack pose, MultiBufferSource buffers, int light) {
-        float spin = (shot.tickCount + partialTick) * SPIN_DEGREES_PER_TICK;
         Entity mob = shot.getDisplayMob();
         pose.pushPose();
+        pose.translate(0, shot.getBbHeight() / 2, 0);
         if (mob != null) {
-            // Centre the mob on the projectile and let it somersault.
-            pose.translate(0, shot.getBbHeight() / 2, 0);
+            float half = mob.getBbHeight() / 2;
             pose.mulPose(Axis.YP.rotationDegrees(-entityYaw));
-            pose.mulPose(Axis.XP.rotationDegrees(spin * 0.6F));
-            pose.translate(0, -mob.getBbHeight() / 2, 0);
+            pose.mulPose(Axis.XP.rotationDegrees(shot.getAim(partialTick) + shot.getFlip(partialTick)));
+            pose.mulPose(Axis.ZP.rotationDegrees(shot.getWobble(partialTick)));
+            pose.translate(0, -half, 0);
             entityRenderDispatcher.render(mob, 0, 0, 0, 0, partialTick, pose, buffers, light);
         } else if (!shot.getItem().isEmpty()) {
-            pose.translate(0, shot.getBbHeight() / 2, 0);
+            float spin = (shot.tickCount + partialTick) * ITEM_SPIN_PER_TICK;
             pose.mulPose(Axis.YP.rotationDegrees(spin));
-            pose.mulPose(Axis.XP.rotationDegrees(spin * 0.5F));
+            pose.mulPose(Axis.ZP.rotationDegrees(shot.getWobble(partialTick)));
             itemRenderer.renderStatic(shot.getItem(), ItemDisplayContext.GROUND, light, OverlayTexture.NO_OVERLAY,
                     pose, buffers, shot.level(), shot.getId());
         }

@@ -38,8 +38,14 @@ import java.util.function.Consumer;
 public final class VacpackItem extends Item implements GeoItem {
     public static final String FAN_CONTROLLER = "fan";
     public static final String RECOIL_CONTROLLER = "recoil";
+    public static final String GULP_CONTROLLER = "gulp";
     public static final String VACUUM_ANIM = "vacuum";
     public static final String SHOOT_ANIM = "shoot";
+    public static final String PULSE_ANIM = "pulse";
+    public static final String SWITCH_ANIM = "switch";
+    public static final String GULP_ANIM = "gulp";
+
+    private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("idle");
 
     private static final int BAR_COLOR = 0x6FD3FF;
 
@@ -119,10 +125,15 @@ public final class VacpackItem extends Item implements GeoItem {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, FAN_CONTROLLER, 0, state -> PlayState.STOP)
+        // The fan idles slowly and spins up while vacuuming; transitions are blended over a few ticks.
+        controllers.add(new AnimationController<>(this, FAN_CONTROLLER, 4, state -> state.setAndContinue(IDLE))
                 .triggerableAnim(VACUUM_ANIM, RawAnimation.begin().thenLoop("vacuum")));
         controllers.add(new AnimationController<>(this, RECOIL_CONTROLLER, 0, state -> PlayState.STOP)
-                .triggerableAnim(SHOOT_ANIM, RawAnimation.begin().thenPlay("shoot")));
+                .triggerableAnim(SHOOT_ANIM, RawAnimation.begin().thenPlay("shoot"))
+                .triggerableAnim(PULSE_ANIM, RawAnimation.begin().thenPlay("pulse"))
+                .triggerableAnim(SWITCH_ANIM, RawAnimation.begin().thenPlay("switch")));
+        controllers.add(new AnimationController<>(this, GULP_CONTROLLER, 0, state -> PlayState.STOP)
+                .triggerableAnim(GULP_ANIM, RawAnimation.begin().thenPlay("gulp")));
     }
 
     @Override

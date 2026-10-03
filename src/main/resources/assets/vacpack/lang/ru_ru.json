@@ -37,5 +37,8 @@
   "subtitles.vacpack.harvest": "Срывается плод",
   "vacpack.configuration.hold_mobs": "Удерживать мобов потоком",
   "vacpack.configuration.max_hold_size": "Макс. размер удерживаемого моба",
-  "entity.vacpack.tank_shot": "Выстрел вакпака"
+  "entity.vacpack.tank_shot": "Выстрел вакпака",
+  "subtitles.vacpack.vacuum_start": "Вакпак раскручивается",
+  "subtitles.vacpack.vacuum_stop": "Вакпак затихает",
+  "subtitles.vacpack.land": "Что-то приземляется"
 }

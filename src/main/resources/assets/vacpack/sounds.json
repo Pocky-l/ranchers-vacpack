@@ -52,5 +52,23 @@
       "vacpack:harvest1",
       "vacpack:harvest2"
     ]
+  },
+  "vacuum_start": {
+    "subtitle": "subtitles.vacpack.vacuum_start",
+    "sounds": [
+      "vacpack:vacuum_start"
+    ]
+  },
+  "vacuum_stop": {
+    "subtitle": "subtitles.vacpack.vacuum_stop",
+    "sounds": [
+      "vacpack:vacuum_stop"
+    ]
+  },
+  "land": {
+    "subtitle": "subtitles.vacpack.land",
+    "sounds": [
+      "vacpack:land"
+    ]
   }
 }

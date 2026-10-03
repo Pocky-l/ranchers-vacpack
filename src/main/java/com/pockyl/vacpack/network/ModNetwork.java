@@ -4,9 +4,10 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import com.pockyl.vacpack.client.ClientVacuumEffects;
+import com.pockyl.vacpack.client.LandingPoses;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "2";
+    private static final String PROTOCOL_VERSION = "3";
 
     private ModNetwork() {
     }
@@ -20,5 +21,7 @@ public final class ModNetwork {
                 (payload, context) -> ClientVacuumEffects.handleState(payload));
         registrar.playToClient(CapturePayload.TYPE, CapturePayload.STREAM_CODEC,
                 (payload, context) -> ClientVacuumEffects.handleCapture(payload));
+        registrar.playToClient(ShotLandedPayload.TYPE, ShotLandedPayload.STREAM_CODEC,
+                (payload, context) -> LandingPoses.handleLanded(payload));
     }
 }

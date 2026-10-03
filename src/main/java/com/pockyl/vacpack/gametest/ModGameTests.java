@@ -123,7 +123,7 @@ public final class ModGameTests {
         helper.assertTrue(vacpack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY).isEmpty(), "the tank is empty again");
 
         TankShot shot = shots.getFirst();
-        shot.release(shot.position(), Vec3.ZERO);
+        shot.release(shot.position(), Vec3.ZERO, false);
         var released = helper.getLevel().getEntitiesOfClass(Slime.class, area, Slime::isAlive);
         helper.assertTrue(released.size() == 1, "exactly one slime lands");
         helper.assertTrue("Pinky".equals(released.getFirst().getCustomName().getString()), "the slime keeps its name");

@@ -78,6 +78,7 @@ public final class VacuumHandler {
         ItemStack stack = player.getMainHandItem();
         if (stack.getItem() instanceof VacpackItem) {
             stack.set(ModDataComponents.TANK, tank(stack).cycle(delta, Config.slotCount()));
+            playAnimation(player, stack, VacpackItem.RECOIL_CONTROLLER, VacpackItem.SWITCH_ANIM);
             if (player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.playNotifySound(ModSounds.SLOT_SWITCH.get(), SoundSource.PLAYERS, 0.6F, 1.0F + 0.05F * delta);
             }
@@ -134,9 +135,11 @@ public final class VacuumHandler {
         state.harvestTicks = 0;
         if (vacuuming) {
             startFanAnimation(player, player.getMainHandItem(), state);
+            playSound(player, ModSounds.VACUUM_START.get(), 0.6F, 1.0F);
         } else {
             dropHeld(player, state);
             stopFanAnimation(player, state);
+            playSound(player, ModSounds.VACUUM_STOP.get(), 0.5F, 1.0F);
         }
         if (player instanceof ServerPlayer) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new VacuumStatePayload(player.getId(), vacuuming));
@@ -186,7 +189,7 @@ public final class VacuumHandler {
                     item.setItem(remaining);
                     blocked = true;
                 }
-                captureEffects(player, nozzle, false);
+                captureEffects(player, stack, nozzle, false);
             }
         }
 
@@ -204,7 +207,7 @@ public final class VacuumHandler {
                 VacTank updated = capture(player, tank, mob, slotCount);
                 if (updated != null) {
                     tank = updated;
-                    captureEffects(player, nozzle, mob instanceof Slime);
+                    captureEffects(player, stack, nozzle, mob instanceof Slime);
                 }
             }
         }
@@ -245,7 +248,8 @@ public final class VacuumHandler {
         }
     }
 
-    private static void captureEffects(Player player, Vec3 nozzle, boolean slime) {
+    private static void captureEffects(Player player, ItemStack stack, Vec3 nozzle, boolean slime) {
+        playAnimation(player, stack, VacpackItem.GULP_CONTROLLER, VacpackItem.GULP_ANIM);
         if (slime) {
             playSound(player, ModSounds.CAPTURE_SLIME.get(), 0.7F, 0.9F + player.getRandom().nextFloat() * 0.3F);
             particles(player, ParticleTypes.ITEM_SLIME, nozzle, 6, 0.15, 0.05);
@@ -530,7 +534,7 @@ public final class VacuumHandler {
             particles(player, ParticleTypes.SMALL_GUST, p, 2, 0.25 * i, 0);
         }
         playSound(player, ModSounds.PULSE.get(), 0.9F, 0.95F + player.getRandom().nextFloat() * 0.1F);
-        triggerRecoil(player, stack);
+        playAnimation(player, stack, VacpackItem.RECOIL_CONTROLLER, VacpackItem.PULSE_ANIM);
     }
 
     private static boolean isPulseTarget(Entity entity) {
@@ -570,8 +574,12 @@ public final class VacuumHandler {
     }
 
     private static void triggerRecoil(Player player, ItemStack stack) {
+        playAnimation(player, stack, VacpackItem.RECOIL_CONTROLLER, VacpackItem.SHOOT_ANIM);
+    }
+
+    private static void playAnimation(Player player, ItemStack stack, String controller, String animation) {
         if (player.level() instanceof ServerLevel serverLevel && stack.getItem() instanceof VacpackItem vacpack) {
-            vacpack.triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), VacpackItem.RECOIL_CONTROLLER, VacpackItem.SHOOT_ANIM);
+            vacpack.triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), controller, animation);
         }
     }
 
