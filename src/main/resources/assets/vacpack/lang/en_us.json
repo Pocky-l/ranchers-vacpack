@@ -2,7 +2,7 @@
   "item.vacpack.vacpack": "Vacpack",
   "tooltip.vacpack.empty": "Tank is empty",
   "tooltip.vacpack.slot": "%s x%s",
-  "tooltip.vacpack.controls": "Hold Use to vacuum, Attack to shoot. An empty slot fires a pulse wave. Switch slots with R or Sneak + Scroll.",
+  "tooltip.vacpack.controls": "Hold Use to vacuum, Attack to shoot. Big mobs float in the air stream - shoot to launch them. An empty slot fires a pulse wave. Switch slots with R or Sneak + Scroll.",
   "key.categories.vacpack": "Rancher's Vacpack",
   "key.vacpack.cycle_slot": "Next Tank Slot",
   "vacpack.configuration.title": "Rancher's Vacpack Configuration",
@@ -32,5 +32,10 @@
   "vacpack.configuration.pulse_enabled": "Enabled",
   "vacpack.configuration.pulse_range": "Range",
   "vacpack.configuration.pulse_strength": "Strength",
-  "vacpack.configuration.pulse_cooldown": "Cooldown"
+  "vacpack.configuration.pulse_cooldown": "Cooldown",
+  "subtitles.vacpack.slot_switch": "Vacpack slot switches",
+  "subtitles.vacpack.harvest": "Fruit pops off",
+  "vacpack.configuration.hold_mobs": "Hold Mobs in Air Stream",
+  "vacpack.configuration.max_hold_size": "Max Held Mob Size",
+  "entity.vacpack.tank_shot": "Vacpack Shot"
 }

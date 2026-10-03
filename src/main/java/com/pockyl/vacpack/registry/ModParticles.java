@@ -12,10 +12,20 @@ import com.pockyl.vacpack.Vacpack;
 public final class ModParticles {
     public static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Vacpack.MOD_ID);
 
-    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> VACUUM = PARTICLES.register(
-            "vacuum", () -> new SimpleParticleType(false));
+    /** Air wisp flying into the nozzle. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> VACUUM = register("vacuum");
+    /** Small ring popping at the nozzle when something is captured. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> CAPTURE_RING = register("capture_ring");
+    /** Large expanding ring of a pulse wave. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> PULSE_RING = register("pulse_ring");
+    /** Air puff at the nozzle when shooting. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SHOT_PUFF = register("shot_puff");
 
     private ModParticles() {
+    }
+
+    private static DeferredHolder<ParticleType<?>, SimpleParticleType> register(String name) {
+        return PARTICLES.register(name, () -> new SimpleParticleType(false));
     }
 
     public static void register(IEventBus modBus) {

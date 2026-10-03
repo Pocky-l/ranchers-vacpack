@@ -1,19 +1,16 @@
 package com.pockyl.vacpack.event;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import com.pockyl.vacpack.Vacpack;
 import com.pockyl.vacpack.registry.ModItems;
-import com.pockyl.vacpack.vacuum.ShotImpacts;
 import com.pockyl.vacpack.vacuum.VacuumHandler;
 
 public final class VacpackEvents {
@@ -30,13 +27,6 @@ public final class VacpackEvents {
         public static void onPlayerTick(PlayerTickEvent.Post event) {
             if (!event.getEntity().level().isClientSide()) {
                 VacuumHandler.tick(event.getEntity());
-            }
-        }
-
-        @SubscribeEvent
-        public static void onEntityTick(EntityTickEvent.Post event) {
-            if (event.getEntity() instanceof ItemEntity item && !item.level().isClientSide()) {
-                ShotImpacts.tick(item);
             }
         }
 

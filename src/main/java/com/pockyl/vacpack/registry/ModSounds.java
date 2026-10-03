@@ -8,14 +8,18 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 import com.pockyl.vacpack.Vacpack;
 
+/** Sounds are built from Kenney's CC0 packs (https://kenney.nl) by the workspace's sound generator. */
 public final class ModSounds {
     public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Vacpack.MOD_ID);
 
     public static final DeferredHolder<SoundEvent, SoundEvent> VACUUM_LOOP = register("vacuum_loop");
     public static final DeferredHolder<SoundEvent, SoundEvent> CAPTURE = register("capture");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CAPTURE_SLIME = register("capture_slime");
     public static final DeferredHolder<SoundEvent, SoundEvent> SHOOT = register("shoot");
     public static final DeferredHolder<SoundEvent, SoundEvent> PULSE = register("pulse");
     public static final DeferredHolder<SoundEvent, SoundEvent> TANK_FULL = register("tank_full");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SLOT_SWITCH = register("slot_switch");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HARVEST = register("harvest");
 
     private ModSounds() {
     }

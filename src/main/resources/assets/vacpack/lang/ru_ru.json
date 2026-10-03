@@ -2,7 +2,7 @@
   "item.vacpack.vacpack": "Вакпак",
   "tooltip.vacpack.empty": "Бак пуст",
   "tooltip.vacpack.slot": "%s x%s",
-  "tooltip.vacpack.controls": "Удерживайте «Использовать», чтобы всасывать, «Атаковать» — чтобы стрелять. Пустой слот даёт воздушный импульс. Слоты: R или Shift + колёсико.",
+  "tooltip.vacpack.controls": "Удерживайте «Использовать», чтобы всасывать, «Атаковать» — чтобы стрелять. Крупные мобы зависают в потоке — выстрел запускает их. Пустой слот даёт воздушный импульс. Слоты: R или Shift + колёсико.",
   "key.categories.vacpack": "Rancher's Vacpack",
   "key.vacpack.cycle_slot": "Следующий слот бака",
   "vacpack.configuration.title": "Настройки Rancher's Vacpack",
@@ -32,5 +32,10 @@
   "vacpack.configuration.pulse_enabled": "Включён",
   "vacpack.configuration.pulse_range": "Дальность",
   "vacpack.configuration.pulse_strength": "Сила",
-  "vacpack.configuration.pulse_cooldown": "Перезарядка"
+  "vacpack.configuration.pulse_cooldown": "Перезарядка",
+  "subtitles.vacpack.slot_switch": "Переключение слота вакпака",
+  "subtitles.vacpack.harvest": "Срывается плод",
+  "vacpack.configuration.hold_mobs": "Удерживать мобов потоком",
+  "vacpack.configuration.max_hold_size": "Макс. размер удерживаемого моба",
+  "entity.vacpack.tank_shot": "Выстрел вакпака"
 }

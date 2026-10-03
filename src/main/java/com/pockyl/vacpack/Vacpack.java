@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import com.pockyl.vacpack.network.ModNetwork;
 import com.pockyl.vacpack.registry.ModAttachments;
 import com.pockyl.vacpack.registry.ModDataComponents;
+import com.pockyl.vacpack.registry.ModEntities;
 import com.pockyl.vacpack.registry.ModItems;
 import com.pockyl.vacpack.registry.ModParticles;
 import com.pockyl.vacpack.registry.ModSounds;
@@ -23,6 +24,7 @@ public final class Vacpack {
     public Vacpack(IEventBus modBus, ModContainer container) {
         ModDataComponents.register(modBus);
         ModItems.register(modBus);
+        ModEntities.register(modBus);
         ModParticles.register(modBus);
         ModSounds.register(modBus);
         ModAttachments.register(modBus);

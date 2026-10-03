@@ -1,6 +1,7 @@
 package com.pockyl.vacpack.vacuum;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -10,7 +11,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
@@ -28,29 +28,36 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.network.PacketDistributor;
 import software.bernie.geckolib.animatable.GeoItem;
 
 import com.pockyl.vacpack.Config;
-import com.pockyl.vacpack.Vacpack;
+import com.pockyl.vacpack.entity.TankShot;
 import com.pockyl.vacpack.item.VacpackItem;
 import com.pockyl.vacpack.network.CapturePayload;
 import com.pockyl.vacpack.network.VacuumStatePayload;
 import com.pockyl.vacpack.registry.ModAttachments;
 import com.pockyl.vacpack.registry.ModDataComponents;
 import com.pockyl.vacpack.registry.ModItems;
+import com.pockyl.vacpack.registry.ModParticles;
 import com.pockyl.vacpack.registry.ModSounds;
 import com.pockyl.vacpack.registry.ModTags;
 import com.pockyl.vacpack.tank.VacTank;
 
-/** Server-side vacpack behavior: suction, capture, shooting, pulse wave and harvesting. */
+import java.util.Comparator;
+
+/** Server-side vacpack behavior: suction, capture, holding, shooting, pulse wave and harvesting. */
 public final class VacuumHandler {
     /** Ticks during which a freshly shot mob or item cannot be vacuumed again. */
     public static final int SHOT_IMMUNITY_TICKS = 20;
     private static final int EMPTY_SHOT_COOLDOWN = 10;
+    private static final int HELD_SHOT_COOLDOWN = 10;
     private static final int FULL_WARNING_INTERVAL = 20;
     private static final int HARVEST_TICKS = 6;
     private static final double SWIRL_SPEED = 0.14;
+    private static final double HOLD_STIFFNESS = 0.45;
+    private static final double HOLD_MAX_SPEED = 1.2;
     private static final double PULSE_CONE_DOT = Math.cos(Math.toRadians(50));
 
     private VacuumHandler() {
@@ -71,6 +78,9 @@ public final class VacuumHandler {
         ItemStack stack = player.getMainHandItem();
         if (stack.getItem() instanceof VacpackItem) {
             stack.set(ModDataComponents.TANK, tank(stack).cycle(delta, Config.slotCount()));
+            if (player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.playNotifySound(ModSounds.SLOT_SWITCH.get(), SoundSource.PLAYERS, 0.6F, 1.0F + 0.05F * delta);
+            }
         }
     }
 
@@ -107,6 +117,7 @@ public final class VacuumHandler {
                 state.fullWarningCooldown = FULL_WARNING_INTERVAL;
                 playSound(player, ModSounds.TANK_FULL.get(), 0.5F, 1.0F);
             }
+            holdTick(player, stack, state);
             harvestTick(player, state);
         }
         if (state.shooting && state.shootCooldown == 0) {
@@ -124,6 +135,7 @@ public final class VacuumHandler {
         if (vacuuming) {
             startFanAnimation(player, player.getMainHandItem(), state);
         } else {
+            dropHeld(player, state);
             stopFanAnimation(player, state);
         }
         if (player instanceof ServerPlayer) {
@@ -132,11 +144,11 @@ public final class VacuumHandler {
     }
 
     // ------------------------------------------------------------------------------------------------
-    // Suction
+    // Suction into the tank
     // ------------------------------------------------------------------------------------------------
 
     /**
-     * One tick of suction: pulls acceptable entities in the cone along a spiral and stores those that reached the nozzle.
+     * One tick of suction: pulls storable entities in the cone along a spiral and stores those that reached the nozzle.
      *
      * @return whether something in the cone was left behind because the tank had no room for it
      */
@@ -174,7 +186,7 @@ public final class VacuumHandler {
                     item.setItem(remaining);
                     blocked = true;
                 }
-                playSound(player, ModSounds.CAPTURE.get(), 0.45F, 1.0F + player.getRandom().nextFloat() * 0.35F);
+                captureEffects(player, nozzle, false);
             }
         }
 
@@ -186,16 +198,13 @@ public final class VacuumHandler {
                 }
                 if (center(mob).distanceTo(nozzle) > capture) {
                     pull(mob, nozzle, axis, range);
-                    tumble(mob);
+                    tumble(mob, 23.0F);
                     continue;
                 }
                 VacTank updated = capture(player, tank, mob, slotCount);
                 if (updated != null) {
                     tank = updated;
-                    playSound(player, ModSounds.CAPTURE.get(), 0.6F, 0.75F + player.getRandom().nextFloat() * 0.15F);
-                    if (mob instanceof Slime) {
-                        playSound(player, SoundEvents.SLIME_SQUISH_SMALL, 0.5F, 1.3F);
-                    }
+                    captureEffects(player, nozzle, mob instanceof Slime);
                 }
             }
         }
@@ -207,13 +216,10 @@ public final class VacuumHandler {
     }
 
     private static VacTank capture(Player player, VacTank tank, Mob mob, int slotCount) {
-        CompoundTag data = new CompoundTag();
-        if (!mob.save(data)) {
+        CompoundTag data = saveMob(mob);
+        if (data == null) {
             return null;
         }
-        // A fresh UUID is assigned on release, so duplicated tanks cannot spawn UUID clashes.
-        data.remove("UUID");
-        data.remove("Motion");
         VacTank updated = tank.insertMob(mob.getType(), data, slotCount, Config.mobCapacity());
         if (updated != null) {
             animateCapture(player, mob);
@@ -222,10 +228,31 @@ public final class VacuumHandler {
         return updated;
     }
 
+    /** Full save of a mob without its UUID (a fresh one is assigned on release, so copies never clash). */
+    private static CompoundTag saveMob(Entity mob) {
+        CompoundTag data = new CompoundTag();
+        if (!mob.save(data)) {
+            return null;
+        }
+        data.remove("UUID");
+        data.remove("Motion");
+        return data;
+    }
+
     private static void animateCapture(Player player, Entity entity) {
         if (player.level() instanceof ServerLevel) {
             PacketDistributor.sendToPlayersTrackingEntity(entity, new CapturePayload(entity.getId(), player.getId()));
         }
+    }
+
+    private static void captureEffects(Player player, Vec3 nozzle, boolean slime) {
+        if (slime) {
+            playSound(player, ModSounds.CAPTURE_SLIME.get(), 0.7F, 0.9F + player.getRandom().nextFloat() * 0.3F);
+            particles(player, ParticleTypes.ITEM_SLIME, nozzle, 6, 0.15, 0.05);
+        } else {
+            playSound(player, ModSounds.CAPTURE.get(), 0.6F, 0.9F + player.getRandom().nextFloat() * 0.35F);
+        }
+        particles(player, ModParticles.CAPTURE_RING.get(), nozzle, 1, 0, 0);
     }
 
     public static boolean canVacuumItem(ItemEntity item) {
@@ -237,9 +264,15 @@ public final class VacuumHandler {
         return mob.isAlive()
                 && mob.getType().is(ModTags.VACUUMABLE)
                 && mob.getBbWidth() <= maxSize && mob.getBbHeight() <= maxSize
-                && !mob.isLeashed() && !mob.isPassenger() && !mob.isVehicle()
-                && !(mob instanceof TamableAnimal pet && pet.isTame() && !pet.isOwnedBy(player))
+                && isFree(player, mob)
                 && !recentlyShot(mob);
+    }
+
+    /** Not tied to anything: no leash, no rider or vehicle, not someone else's pet. */
+    private static boolean isFree(Player player, LivingEntity entity) {
+        return !(entity instanceof Mob mob && mob.isLeashed())
+                && !entity.isPassenger() && !entity.isVehicle()
+                && !(entity instanceof TamableAnimal pet && pet.isTame() && !pet.isOwnedBy(player));
     }
 
     private static boolean recentlyShot(Entity entity) {
@@ -275,17 +308,118 @@ public final class VacuumHandler {
         Vec3 lift = new Vec3(0, entity.getGravity(), 0);
 
         entity.setDeltaMovement(entity.getDeltaMovement().scale(0.25).add(inward).add(swirl).add(lift));
+        markMoved(entity);
+    }
+
+    private static void tumble(LivingEntity entity, float degrees) {
+        float yaw = entity.getYRot() + degrees;
+        entity.setYRot(yaw);
+        entity.setYHeadRot(yaw);
+        entity.setYBodyRot(yaw);
+    }
+
+    private static void markMoved(Entity entity) {
         entity.resetFallDistance();
         entity.hasImpulse = true;
         entity.hurtMarked = true;
     }
 
-    /** Mobs spin helplessly while being sucked in. */
-    private static void tumble(Mob mob) {
-        float yaw = mob.getYRot() + 23.0F;
-        mob.setYRot(yaw);
-        mob.setYHeadRot(yaw);
-        mob.setYBodyRot(yaw);
+    // ------------------------------------------------------------------------------------------------
+    // Holding in the air stream
+    // ------------------------------------------------------------------------------------------------
+
+    /**
+     * Keeps one mob that cannot go into the tank (too big, not vacuumable or no room) floating in front of the nozzle,
+     * like carrying a largo in the air stream. It follows the aim; shooting launches it, releasing the button drops it.
+     */
+    public static void holdTick(Player player, ItemStack stack, VacuumState state) {
+        if (!Config.holdMobs()) {
+            return;
+        }
+        Level level = player.level();
+        LivingEntity held = level.getEntity(state.heldEntityId) instanceof LivingEntity living ? living : null;
+        if (held != null && (!canHold(player, held) || center(held).distanceTo(holdPoint(player, held)) > Config.range())) {
+            held = null;
+        }
+        if (held == null) {
+            held = findHoldTarget(player, stack);
+            state.heldEntityId = held == null ? -1 : held.getId();
+            if (held != null) {
+                playSound(player, ModSounds.CAPTURE.get(), 0.5F, 0.6F);
+            }
+        }
+        if (held == null) {
+            return;
+        }
+
+        Vec3 toTarget = holdPoint(player, held).subtract(center(held));
+        Vec3 velocity = toTarget.scale(HOLD_STIFFNESS);
+        if (velocity.length() > HOLD_MAX_SPEED) {
+            velocity = velocity.normalize().scale(HOLD_MAX_SPEED);
+        }
+        held.setDeltaMovement(velocity.add(0, held.getGravity(), 0));
+        if (held instanceof Mob mob) {
+            mob.getNavigation().stop();
+        }
+        tumble(held, 4.0F);
+        markMoved(held);
+    }
+
+    /** Where a held entity floats: just in front of the nozzle, further away for bigger entities. */
+    public static Vec3 holdPoint(Player player, Entity entity) {
+        return nozzlePos(player).add(player.getLookAngle().scale(1.4 + entity.getBbWidth() * 0.7));
+    }
+
+    private static LivingEntity findHoldTarget(Player player, ItemStack stack) {
+        double range = Config.range();
+        double minDot = Math.cos(Math.toRadians(Config.coneAngle()));
+        VacTank tank = tank(stack);
+        int slotCount = Config.slotCount();
+        return player.level().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(range),
+                        e -> canHold(player, e) && inCone(player, e, range, minDot)
+                                && !(e instanceof Mob mob && canVacuumMob(player, mob)
+                                && tank.slotForMob(mob.getType(), slotCount, Config.mobCapacity()) >= 0))
+                .stream()
+                .min(Comparator.comparingDouble(player::distanceToSqr))
+                .orElse(null);
+    }
+
+    private static boolean canHold(Player player, LivingEntity entity) {
+        double maxSize = Config.maxHoldSize();
+        return entity.isAlive() && entity != player && !(entity instanceof Player)
+                && !entity.getType().is(Tags.EntityTypes.BOSSES)
+                && entity.getBbWidth() <= maxSize && entity.getBbHeight() <= maxSize
+                && isFree(player, entity)
+                && !recentlyShot(entity);
+    }
+
+    private static void dropHeld(Player player, VacuumState state) {
+        if (player.level().getEntity(state.heldEntityId) instanceof LivingEntity held) {
+            // Let it drop gently instead of keeping the hold velocity.
+            held.setDeltaMovement(held.getDeltaMovement().scale(0.3));
+            markMoved(held);
+        }
+        state.heldEntityId = -1;
+    }
+
+    /** Launches the held mob, if any. */
+    private static boolean shootHeld(Player player, ItemStack stack, VacuumState state) {
+        if (!(player.level().getEntity(state.heldEntityId) instanceof LivingEntity held) || !held.isAlive()) {
+            return false;
+        }
+        state.heldEntityId = -1;
+        CompoundTag data = saveMob(held);
+        if (data == null) {
+            return false;
+        }
+        TankShot shot = TankShot.ofMob(player.level(), player, data);
+        Vec3 from = center(held);
+        shot.moveTo(from.x, from.y - shot.getBbHeight() / 2, from.z, player.getYRot(), 0);
+        shot.setDeltaMovement(player.getLookAngle().scale(Config.shootSpeed() * 0.9).add(0, 0.08, 0));
+        held.discard();
+        player.level().addFreshEntity(shot);
+        shotEffects(player, stack, from);
+        return true;
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -322,12 +456,17 @@ public final class VacuumHandler {
     // ------------------------------------------------------------------------------------------------
 
     /**
-     * Shoots one item or mob out of the selected slot, or releases a pulse wave if the slot is empty.
+     * Launches the held mob if there is one; otherwise shoots one item or mob out of the selected slot, or releases a
+     * pulse wave if the slot is empty.
      *
      * @return cooldown in ticks until the next shot
      */
     public static int shoot(Player player, ItemStack stack) {
-        Level level = player.level();
+        VacuumState state = player.getExistingDataOrNull(ModAttachments.VACUUM_STATE);
+        if (state != null && shootHeld(player, stack, state)) {
+            return HELD_SHOT_COOLDOWN;
+        }
+
         VacTank.Taken taken = tank(stack).takeFromSelected();
         if (taken.isEmpty()) {
             if (Config.pulseEnabled()) {
@@ -338,40 +477,25 @@ public final class VacuumHandler {
             return EMPTY_SHOT_COOLDOWN;
         }
 
+        Level level = player.level();
+        TankShot shot = taken.item().isEmpty()
+                ? TankShot.ofMob(level, player, taken.mob())
+                : TankShot.ofItem(level, player, taken.item());
         Vec3 origin = safeNozzlePos(player);
-        Vec3 look = player.getLookAngle();
-        Vec3 velocity = look.scale(Config.shootSpeed()).add(0, 0.06, 0);
-        Shot shot = new Shot(player.getUUID(), level.getGameTime());
-
-        if (!taken.item().isEmpty()) {
-            ItemEntity item = new ItemEntity(level, origin.x, origin.y - 0.125, origin.z, taken.item(), velocity.x, velocity.y, velocity.z);
-            item.setPickUpDelay(SHOT_IMMUNITY_TICKS);
-            item.setThrower(player);
-            item.setData(ModAttachments.SHOT, shot);
-            level.addFreshEntity(item);
-        } else {
-            Entity mob = EntityType.loadEntityRecursive(taken.mob(), level, entity -> {
-                entity.moveTo(origin.x, origin.y - entity.getBbHeight() / 2, origin.z, player.getYRot(), 0);
-                return entity;
-            });
-            if (mob == null) {
-                Vacpack.LOGGER.warn("Discarding stored mob that can no longer be loaded: {}", taken.mob().getString("id"));
-            } else {
-                mob.setDeltaMovement(velocity.scale(0.8));
-                mob.resetFallDistance();
-                mob.setData(ModAttachments.SHOT, shot);
-                level.addFreshEntity(mob);
-            }
-        }
+        shot.moveTo(origin.x, origin.y - shot.getBbHeight() / 2, origin.z, player.getYRot(), 0);
+        shot.setDeltaMovement(player.getLookAngle().scale(Config.shootSpeed()).add(0, 0.06, 0));
+        level.addFreshEntity(shot);
 
         stack.set(ModDataComponents.TANK, taken.tank());
-        if (level instanceof ServerLevel serverLevel) {
-            Vec3 puff = origin.add(look.scale(0.4));
-            serverLevel.sendParticles(ParticleTypes.POOF, puff.x, puff.y, puff.z, 3, 0.05, 0.05, 0.05, 0.03);
-        }
-        playSound(player, ModSounds.SHOOT.get(), 0.7F, 0.9F + player.getRandom().nextFloat() * 0.25F);
-        triggerRecoil(player, stack);
+        shotEffects(player, stack, origin);
         return Config.shootCooldown();
+    }
+
+    private static void shotEffects(Player player, ItemStack stack, Vec3 origin) {
+        Vec3 puff = origin.add(player.getLookAngle().scale(0.4));
+        particles(player, ModParticles.SHOT_PUFF.get(), puff, 3, 0.06, 0.02);
+        playSound(player, ModSounds.SHOOT.get(), 0.8F, 0.9F + player.getRandom().nextFloat() * 0.25F);
+        triggerRecoil(player, stack);
     }
 
     /** Pushes every item, mob and projectile in a wide cone away from the player. */
@@ -399,15 +523,13 @@ public final class VacuumHandler {
             entity.hurtMarked = true;
         }
 
-        if (level instanceof ServerLevel serverLevel) {
-            Vec3 center = nozzlePos(player).add(look.scale(1.2));
-            serverLevel.sendParticles(ParticleTypes.GUST_EMITTER_SMALL, center.x, center.y, center.z, 1, 0, 0, 0, 0);
-            for (int i = 1; i <= 3; i++) {
-                Vec3 p = eye.add(look.scale(i * range / 3.5));
-                serverLevel.sendParticles(ParticleTypes.SMALL_GUST, p.x, p.y, p.z, 2, 0.3 * i, 0.2 * i, 0.3 * i, 0);
-            }
+        Vec3 nozzle = nozzlePos(player);
+        for (int i = 1; i <= 4; i++) {
+            Vec3 p = nozzle.add(look.scale(i * range / 5.0));
+            particles(player, ModParticles.PULSE_RING.get(), p, 1, 0, 0);
+            particles(player, ParticleTypes.SMALL_GUST, p, 2, 0.25 * i, 0);
         }
-        playSound(player, ModSounds.PULSE.get(), 0.8F, 0.95F + player.getRandom().nextFloat() * 0.1F);
+        playSound(player, ModSounds.PULSE.get(), 0.9F, 0.95F + player.getRandom().nextFloat() * 0.1F);
         triggerRecoil(player, stack);
     }
 
@@ -417,7 +539,7 @@ public final class VacuumHandler {
     }
 
     // ------------------------------------------------------------------------------------------------
-    // Geometry, animation, sound
+    // Geometry, animation, sound, particles
     // ------------------------------------------------------------------------------------------------
 
     /** Point slightly in front of and beside the player's eyes where the nozzle is. */
@@ -435,7 +557,7 @@ public final class VacuumHandler {
         return player.getEyePosition(partialTick).add(look.scale(0.9)).add(right.scale(0.3)).add(0, -0.25, 0);
     }
 
-    /** Nozzle position pulled back from walls, so shot entities never spawn inside blocks. */
+    /** Nozzle position pulled back from walls, so shots never start inside blocks. */
     private static Vec3 safeNozzlePos(Player player) {
         Vec3 eye = player.getEyePosition();
         Vec3 nozzle = nozzlePos(player);
@@ -469,6 +591,12 @@ public final class VacuumHandler {
 
     static void playSound(Player player, SoundEvent sound, float volume, float pitch) {
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), sound, SoundSource.PLAYERS, volume, pitch);
+    }
+
+    private static void particles(Player player, ParticleOptions type, Vec3 pos, int count, double spread, double speed) {
+        if (player.level() instanceof ServerLevel level) {
+            level.sendParticles(type, pos.x, pos.y, pos.z, count, spread, spread, spread, speed);
+        }
     }
 
     private static Vec3 center(Entity entity) {

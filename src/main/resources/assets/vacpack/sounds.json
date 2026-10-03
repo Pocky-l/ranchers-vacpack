@@ -8,13 +8,24 @@
   "capture": {
     "subtitle": "subtitles.vacpack.capture",
     "sounds": [
-      "vacpack:capture"
+      "vacpack:capture1",
+      "vacpack:capture2",
+      "vacpack:capture3"
+    ]
+  },
+  "capture_slime": {
+    "subtitle": "subtitles.vacpack.capture",
+    "sounds": [
+      "vacpack:capture_slime1",
+      "vacpack:capture_slime2"
     ]
   },
   "shoot": {
     "subtitle": "subtitles.vacpack.shoot",
     "sounds": [
-      "vacpack:shoot"
+      "vacpack:shoot1",
+      "vacpack:shoot2",
+      "vacpack:shoot3"
     ]
   },
   "pulse": {
@@ -27,6 +38,19 @@
     "subtitle": "subtitles.vacpack.tank_full",
     "sounds": [
       "vacpack:tank_full"
+    ]
+  },
+  "slot_switch": {
+    "subtitle": "subtitles.vacpack.slot_switch",
+    "sounds": [
+      "vacpack:slot_switch"
+    ]
+  },
+  "harvest": {
+    "subtitle": "subtitles.vacpack.harvest",
+    "sounds": [
+      "vacpack:harvest1",
+      "vacpack:harvest2"
     ]
   }
 }

@@ -12,10 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tank HUD with fill gauges next to the hotbar; switch slots with `R` or Sneak + Scroll.
 - Suction vortex: vacuumed things float, swirl and shrink into the nozzle; a particle beam shows the airflow.
 - Pulse Wave: shooting with an empty slot blasts mobs, items and projectiles away.
-- Shot items hit mobs for a little damage and knockback.
+- Shots fly as smooth tumbling projectiles; items hit mobs for a little damage and knockback, mobs land unharmed.
+- Air stream holding: mobs that do not fit into the tank float in front of the nozzle and can be launched.
 - Vacuum ripe sweet berries and glow berries right off the plant.
 - Animated GeckoLib model with a spinning drum and recoil.
-- Custom sounds: motor hum, capture slurp, shot, pulse wave and a full-tank warning.
+- Custom sounds (based on Kenney's CC0 packs) and particles: motor hum, capture bloops, slime squelches, shots,
+  pulse wave, slot clicks, harvest plucks, full-tank warning; air wisps, capture rings, shot puffs, pulse rings.
 - Crafting recipe with a Breeze Rod, unlocked when you pick one up.
 - Server config for range, power, capacities and shooting, plus data pack tags for vacuumable mobs and ignored items.
 - English and Russian translations.

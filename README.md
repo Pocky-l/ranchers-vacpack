@@ -16,7 +16,10 @@ A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs,
 - **Tank** — 4 slots; each slot holds one kind of item (up to 64) or one kind of mob (up to 10).
   Captured mobs keep everything: name, health, equipment.
 - **Shoot** — press *Attack* (left click) to launch one item or mob from the selected slot; hold it to fire continuously.
-  Shot items smack into mobs, dealing a little damage and knockback.
+  Shots fly smoothly and tumble through the air; items smack into mobs for a little damage and knockback,
+  mobs land unharmed.
+- **Air stream holding** — mobs that do not fit into the tank (big slimes, cows, zombies...) float in front of the
+  nozzle while you vacuum and follow your aim. Shoot to launch them, let go to drop them. Bosses cannot be held.
 - **Pulse Wave** — shooting with an empty slot releases a blast of air that knocks back mobs, items and projectiles.
 - **Harvesting** — aim at a ripe sweet berry bush or glow berry vine while vacuuming to pull the berries off.
 - **Slot selection** — `R` (rebindable) or *Sneak + Scroll*. The tank is shown next to the hotbar.
@@ -24,7 +27,8 @@ A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs,
   silverfish, endermites, bats, parrots, fish and armadillos. Big slimes, leashed mobs, riders and other players' pets
   cannot be vacuumed.
 - Animated model: the drum spins while vacuuming and the gun kicks back on every shot.
-- Custom sounds: motor hum while vacuuming, a slurp for every capture, a punchy shot and a buzz when the tank is full.
+- Custom sounds and particles: motor hum, capture bloops and slime squelches, air-cannon shots, pulse wave boom,
+  slot clicks, air wisps, capture rings and shot puffs.
 - HUD with a fill gauge per slot.
 - Sneak + use on a block still opens chests, doors and other blocks while holding the vacpack.
 
@@ -49,6 +53,10 @@ the pulse wave can be switched off separately.
 
 - `#vacpack:vacuumable` (entity types) — mobs that can be vacuumed.
 - `#vacpack:not_vacuumable` (items) — items the vacpack ignores.
+
+## Credits
+
+Sound effects are built from [Kenney](https://kenney.nl)'s Sci-Fi, Impact and Interface sound packs (CC0).
 
 ## Building
 

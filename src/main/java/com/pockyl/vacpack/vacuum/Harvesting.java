@@ -16,6 +16,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.Vec3;
 
+import com.pockyl.vacpack.registry.ModSounds;
+
 /** Pulling fruit off plants with the vacpack, like vacuuming fruit off trees in the original game. */
 public final class Harvesting {
     private Harvesting() {
@@ -35,12 +37,14 @@ public final class Harvesting {
             int age = state.getValue(SweetBerryBushBlock.AGE);
             int count = 1 + level.random.nextInt(2) + (age == SweetBerryBushBlock.MAX_AGE ? 1 : 0);
             spawnFruit(level, pos, player, new ItemStack(Items.SWEET_BERRIES, count));
+            level.playSound(null, pos, ModSounds.HARVEST.get(), SoundSource.BLOCKS, 0.8F, 0.9F + level.random.nextFloat() * 0.3F);
             level.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + level.random.nextFloat() * 0.4F);
             BlockState picked = state.setValue(SweetBerryBushBlock.AGE, 1);
             level.setBlock(pos, picked, Block.UPDATE_CLIENTS);
             level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, picked));
         } else if (state.getBlock() instanceof CaveVines && CaveVines.hasGlowBerries(state)) {
             spawnFruit(level, pos, player, new ItemStack(Items.GLOW_BERRIES));
+            level.playSound(null, pos, ModSounds.HARVEST.get(), SoundSource.BLOCKS, 0.8F, 0.9F + level.random.nextFloat() * 0.3F);
             level.playSound(null, pos, SoundEvents.CAVE_VINES_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + level.random.nextFloat() * 0.4F);
             BlockState picked = state.setValue(CaveVines.BERRIES, false);
             level.setBlock(pos, picked, Block.UPDATE_CLIENTS);

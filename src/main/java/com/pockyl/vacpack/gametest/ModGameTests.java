@@ -23,12 +23,11 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.Vacpack;
+import com.pockyl.vacpack.entity.TankShot;
 import com.pockyl.vacpack.registry.ModAttachments;
 import com.pockyl.vacpack.registry.ModDataComponents;
 import com.pockyl.vacpack.registry.ModItems;
 import com.pockyl.vacpack.tank.VacTank;
-import com.pockyl.vacpack.vacuum.Shot;
-import com.pockyl.vacpack.vacuum.ShotImpacts;
 import com.pockyl.vacpack.vacuum.VacuumHandler;
 import com.pockyl.vacpack.vacuum.VacuumState;
 
@@ -109,7 +108,7 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
-    public static void shootReleasesStoredSlime(GameTestHelper helper) {
+    public static void shotSlimeFliesAsProjectileAndLandsAlive(GameTestHelper helper) {
         Player player = player(helper);
         ItemStack vacpack = player.getMainHandItem();
         Slime slime = spawnSlime(helper, VacuumHandler.nozzlePos(player), 1);
@@ -119,11 +118,41 @@ public final class ModGameTests {
         VacuumHandler.shoot(player, vacpack);
 
         AABB area = new AABB(player.blockPosition()).inflate(4);
-        var released = helper.getLevel().getEntitiesOfClass(Slime.class, area, Slime::isAlive);
-        helper.assertTrue(released.size() == 1, "exactly one slime is released");
-        helper.assertTrue("Pinky".equals(released.getFirst().getCustomName().getString()), "the slime keeps its name");
+        var shots = helper.getLevel().getEntitiesOfClass(TankShot.class, area, TankShot::carriesMob);
+        helper.assertTrue(shots.size() == 1, "the slime flies as a projectile");
         helper.assertTrue(vacpack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY).isEmpty(), "the tank is empty again");
+
+        TankShot shot = shots.getFirst();
+        shot.release(shot.position(), Vec3.ZERO);
+        var released = helper.getLevel().getEntitiesOfClass(Slime.class, area, Slime::isAlive);
+        helper.assertTrue(released.size() == 1, "exactly one slime lands");
+        helper.assertTrue("Pinky".equals(released.getFirst().getCustomName().getString()), "the slime keeps its name");
+        helper.assertTrue(shot.isRemoved(), "the projectile is gone");
         released.forEach(Slime::discard);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void bigSlimeIsHeldInAirStreamAndLaunched(GameTestHelper helper) {
+        Player player = player(helper);
+        ItemStack vacpack = player.getMainHandItem();
+        Vec3 ahead = player.getEyePosition().add(player.getLookAngle().scale(5));
+        Slime big = spawnSlime(helper, ahead, 4);
+        VacuumState state = player.getData(ModAttachments.VACUUM_STATE);
+
+        VacuumHandler.holdTick(player, vacpack, state);
+
+        Vec3 toHold = VacuumHandler.holdPoint(player, big).subtract(big.getBoundingBox().getCenter());
+        helper.assertTrue(big.getDeltaMovement().dot(toHold) > 0, "the big slime is pulled to the hold point");
+        helper.assertTrue(big.isAlive(), "a held slime is not stored");
+
+        VacuumHandler.shoot(player, vacpack);
+
+        helper.assertTrue(big.isRemoved(), "shooting launches the held slime");
+        AABB area = new AABB(player.blockPosition()).inflate(8);
+        helper.assertTrue(helper.getLevel().getEntitiesOfClass(TankShot.class, area, TankShot::carriesMob).size() == 1,
+                "the held slime flies as a projectile");
+        helper.getLevel().getEntitiesOfClass(TankShot.class, area, e -> true).forEach(TankShot::discard);
         helper.succeed();
     }
 
@@ -188,16 +217,22 @@ public final class ModGameTests {
         cow.moveTo(pos.x, pos.y, pos.z, 0, 0);
         cow.setNoAi(true);
         helper.getLevel().addFreshEntity(cow);
-        ItemEntity item = new ItemEntity(helper.getLevel(), pos.x - 0.6, pos.y + 0.6, pos.z, new ItemStack(Items.COBBLESTONE), 1.2, 0, 0);
-        item.setData(ModAttachments.SHOT, new Shot(player.getUUID(), helper.getLevel().getGameTime()));
-        helper.getLevel().addFreshEntity(item);
+        TankShot shot = TankShot.ofItem(helper.getLevel(), player, new ItemStack(Items.COBBLESTONE));
+        shot.moveTo(pos.x - 1.5, pos.y + 0.5, pos.z, 0, 0);
+        shot.setDeltaMovement(1.2, 0, 0);
+        helper.getLevel().addFreshEntity(shot);
 
-        ShotImpacts.tick(item);
+        for (int i = 0; i < 4 && shot.isAlive(); i++) {
+            shot.tick();
+        }
 
         helper.assertTrue(cow.getHealth() < cow.getMaxHealth(), "the cow takes damage");
-        helper.assertTrue(item.getExistingDataOrNull(ModAttachments.SHOT) == null, "an item hits only once");
+        helper.assertTrue(shot.isRemoved(), "the shot turns back into an item on impact");
+        AABB area = new AABB(cow.blockPosition()).inflate(3);
+        helper.assertTrue(!helper.getLevel().getEntitiesOfClass(ItemEntity.class, area, e -> e.getItem().is(Items.COBBLESTONE)).isEmpty(),
+                "the cobblestone drops");
         cow.discard();
-        item.discard();
+        helper.getLevel().getEntitiesOfClass(ItemEntity.class, area, e -> true).forEach(ItemEntity::discard);
         helper.succeed();
     }
 

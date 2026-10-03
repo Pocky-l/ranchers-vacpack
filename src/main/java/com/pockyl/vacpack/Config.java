@@ -4,7 +4,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
  * Server config: synced to clients, so the HUD shows the server's slot count.
- * Read values through the accessors вЂ” they fall back to defaults while no world is loaded.
+ * Read values through the accessors РІР‚вЂќ they fall back to defaults while no world is loaded.
  */
 public final class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
@@ -17,6 +17,8 @@ public final class Config {
     private static final ModConfigSpec.BooleanValue VACUUM_MOBS;
     private static final ModConfigSpec.DoubleValue MAX_MOB_SIZE;
     private static final ModConfigSpec.BooleanValue HARVEST_BERRIES;
+    private static final ModConfigSpec.BooleanValue HOLD_MOBS;
+    private static final ModConfigSpec.DoubleValue MAX_HOLD_SIZE;
 
     private static final ModConfigSpec.IntValue SLOT_COUNT;
     private static final ModConfigSpec.IntValue ITEM_CAPACITY;
@@ -57,6 +59,12 @@ public final class Config {
         HARVEST_BERRIES = BUILDER.translation(key("harvest_berries"))
                 .comment("Whether aiming the vacpack at ripe sweet berry bushes and glow berry vines picks their berries.")
                 .define("harvestBerries", true);
+        HOLD_MOBS = BUILDER.translation(key("hold_mobs"))
+                .comment("Whether a mob that cannot go into the tank is held floating in the air stream instead.")
+                .define("holdMobs", true);
+        MAX_HOLD_SIZE = BUILDER.translation(key("max_hold_size"))
+                .comment("Mobs wider or taller than this (in blocks) cannot be held. Bosses can never be held.")
+                .defineInRange("maxHoldSize", 2.1, 0.1, 8.0);
         BUILDER.pop();
 
         BUILDER.translation(key("tank")).push("tank");
@@ -142,6 +150,14 @@ public final class Config {
 
     public static boolean harvestBerries() {
         return get(HARVEST_BERRIES);
+    }
+
+    public static boolean holdMobs() {
+        return get(HOLD_MOBS);
+    }
+
+    public static double maxHoldSize() {
+        return get(MAX_HOLD_SIZE);
     }
 
     public static int slotCount() {
