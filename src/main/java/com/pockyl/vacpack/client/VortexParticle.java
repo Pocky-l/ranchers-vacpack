@@ -12,43 +12,84 @@ import net.minecraft.world.phys.Vec3;
 import com.pockyl.vacpack.vacuum.VacuumHandler;
 
 /**
- * An air wisp of the suction vortex. It is attached to the vacuuming player: every tick its position is recomputed
- * along a narrowing spiral around the current aim, so the whole funnel turns with the player and wisps swirl into the
- * nozzle, speeding up as they get closer.
+ * A particle of the suction vortex. It is attached to the vacuuming player: every tick its position is recomputed on a
+ * narrowing spiral around the current aim, so the whole funnel turns with the player and everything swirls into the
+ * nozzle, speeding up as it gets closer. Rendered full-bright so the vortex glows at night.
  */
 public final class VortexParticle extends TextureSheetParticle {
+    /** What the particle is: shapes the funnel radius, spin, size and color. */
+    public enum Style {
+        /** Pixel air wisp on a spiral arm. */
+        WISP,
+        /** Soft glowing dot on a spiral arm. */
+        DOT,
+        /** Tiny fast dot close to the nozzle. */
+        MOTE,
+        /** Dot of a ring that contracts down the funnel together with its siblings. */
+        RING
+    }
+
+    private static final int FULL_BRIGHT = 0xF000F0;
+
     private final Player player;
+    private final Style style;
     private final float maxDistance;
     private final float maxRadius;
     private final float spin;
+    private final float baseSize;
+    private final float baseAlpha;
     private float distance;
     private float angle;
     private float speed;
-    private final float baseSize;
 
-    public VortexParticle(ClientLevel level, Player player, SpriteSet sprites, float distance, float angle, boolean mote) {
+    public VortexParticle(ClientLevel level, Player player, SpriteSet sprites, Style style, float distance, float angle) {
         super(level, player.getX(), player.getEyeY(), player.getZ());
         RandomSource random = level.random;
         this.player = player;
+        this.style = style;
         this.maxDistance = distance;
         this.distance = distance;
         this.angle = angle;
-        // The funnel is narrow: a little over a block wide at its far end, closing in to the nozzle.
-        this.maxRadius = (0.12F + distance * 0.13F) * (mote ? 0.5F : 0.7F + random.nextFloat() * 0.3F);
-        this.spin = (0.22F + random.nextFloat() * 0.1F) * (mote ? 1.6F : 1.0F);
-        this.speed = 0.12F + distance * 0.02F;
+        float funnel = 0.12F + distance * 0.13F;
+        float jitter = 0.75F + random.nextFloat() * 0.25F;
+        switch (style) {
+            case WISP -> {
+                maxRadius = funnel * jitter;
+                spin = 0.2F + random.nextFloat() * 0.08F;
+                baseSize = 0.08F + random.nextFloat() * 0.05F;
+                baseAlpha = 0.65F;
+            }
+            case DOT -> {
+                maxRadius = funnel * 0.8F * jitter;
+                spin = 0.24F + random.nextFloat() * 0.08F;
+                baseSize = 0.05F + random.nextFloat() * 0.04F;
+                baseAlpha = 0.55F;
+            }
+            case MOTE -> {
+                maxRadius = funnel * 0.4F;
+                spin = 0.45F;
+                baseSize = 0.025F + random.nextFloat() * 0.015F;
+                baseAlpha = 0.8F;
+            }
+            default -> {
+                maxRadius = funnel;
+                spin = 0.18F;
+                baseSize = 0.04F;
+                baseAlpha = 0.45F;
+            }
+        }
+        this.speed = 0.11F + distance * 0.02F;
         this.lifetime = 60;
         this.hasPhysics = false;
         this.gravity = 0;
-        this.baseSize = mote ? 0.035F + random.nextFloat() * 0.02F : 0.08F + random.nextFloat() * 0.06F;
         this.quadSize = baseSize;
         this.roll = random.nextFloat() * Mth.TWO_PI;
         this.oRoll = roll;
-        float shade = 0.88F + random.nextFloat() * 0.12F;
-        if (mote) {
+        float shade = 0.9F + random.nextFloat() * 0.1F;
+        if (style == Style.MOTE) {
             setColor(shade, shade, shade);
         } else {
-            setColor(shade * 0.78F, shade * 0.93F, shade);
+            setColor(shade * 0.72F, shade * 0.92F, shade);
         }
         setAlpha(0);
         pickSprite(sprites);
@@ -68,18 +109,25 @@ public final class VortexParticle extends TextureSheetParticle {
             remove();
             return;
         }
-        // Accelerate towards the nozzle like air rushing into it.
-        speed *= 1.12F;
+        // Accelerate towards the nozzle like air rushing into it; spin faster where the funnel is narrow.
+        speed *= 1.11F;
         distance -= speed;
-        angle += spin * (1.0F + 1.5F * (1.0F - distance / maxDistance));
-        roll += spin * 0.5F;
+        float progress = 1.0F - Math.max(distance, 0) / maxDistance;
+        angle += spin * (1.0F + 1.5F * progress);
+        if (style == Style.WISP) {
+            roll += spin * 0.5F;
+        }
         placeOnSpiral();
 
-        float progress = 1.0F - Math.max(distance, 0) / maxDistance;
-        quadSize = baseSize * (1.0F - 0.6F * progress);
+        quadSize = baseSize * (1.0F - 0.55F * progress);
         float fadeIn = Math.min(1.0F, age / 3.0F);
-        float fadeOut = Math.min(1.0F, distance / 0.8F);
-        setAlpha(0.7F * fadeIn * fadeOut);
+        float fadeOut = Math.min(1.0F, distance / 0.9F);
+        setAlpha(baseAlpha * fadeIn * fadeOut);
+        // Brighten towards white as it nears the nozzle.
+        float white = 0.72F + 0.28F * progress;
+        if (style != Style.MOTE) {
+            setColor(white, 0.92F + 0.08F * progress, 1.0F);
+        }
     }
 
     private void placeOnSpiral() {
@@ -94,6 +142,11 @@ public final class VortexParticle extends TextureSheetParticle {
                 .add(u.scale(Mth.cos(angle) * radius))
                 .add(v.scale(Mth.sin(angle) * radius));
         setPos(pos.x, pos.y, pos.z);
+    }
+
+    @Override
+    protected int getLightColor(float partialTick) {
+        return FULL_BRIGHT;
     }
 
     @Override

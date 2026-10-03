@@ -32,7 +32,11 @@ public final class VacpackClient {
 
     private static void registerParticles(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(ModParticles.VACUUM.get(), sprites -> {
-            ClientVacuumEffects.setVortexSprites(sprites);
+            ClientVacuumEffects.setWispSprites(sprites);
+            return new VacuumParticle.Provider(sprites);
+        });
+        event.registerSpriteSet(ModParticles.VACUUM_DOT.get(), sprites -> {
+            ClientVacuumEffects.setDotSprites(sprites);
             return new VacuumParticle.Provider(sprites);
         });
         event.registerSpriteSet(ModParticles.CAPTURE_RING.get(), BurstParticle.CaptureRing::new);

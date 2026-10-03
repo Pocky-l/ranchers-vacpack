@@ -26,9 +26,9 @@ import com.pockyl.vacpack.network.ShotLandedPayload;
  */
 @EventBusSubscriber(modid = Vacpack.MOD_ID, value = Dist.CLIENT)
 public final class LandingPoses {
-    private static final float RECOVERY_TICKS = 7.0F;
+    private static final float RECOVERY_TICKS = 10.0F;
 
-    private record Tilt(float flip, float wobble, float yaw, long startTick) {
+    private record Tilt(float pitch, float roll, float yaw, long startTick) {
     }
 
     private static final Int2ObjectMap<Tilt> TILTS = new Int2ObjectOpenHashMap<>();
@@ -40,8 +40,8 @@ public final class LandingPoses {
     public static void handleLanded(ShotLandedPayload payload) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level != null && level.getEntity(payload.shotId()) instanceof TankShot shot) {
-            float flip = Mth.wrapDegrees(shot.getFlip(1.0F) + shot.getAim(1.0F));
-            TILTS.put(payload.mobId(), new Tilt(flip, shot.getWobble(1.0F), shot.getYRot(), level.getGameTime()));
+            TILTS.put(payload.mobId(), new Tilt(Mth.wrapDegrees(shot.getPitch(1.0F)), Mth.wrapDegrees(shot.getRoll(1.0F)),
+                    shot.getYRot(), level.getGameTime()));
         }
     }
 
@@ -64,8 +64,8 @@ public final class LandingPoses {
         float half = entity.getBbHeight() / 2;
         pose.translate(0, half, 0);
         pose.mulPose(Axis.YP.rotationDegrees(-tilt.yaw()));
-        pose.mulPose(Axis.XP.rotationDegrees(tilt.flip() * ease));
-        pose.mulPose(Axis.ZP.rotationDegrees(tilt.wobble() * ease));
+        pose.mulPose(Axis.XP.rotationDegrees(tilt.pitch() * ease));
+        pose.mulPose(Axis.ZP.rotationDegrees(tilt.roll() * ease));
         pose.mulPose(Axis.YP.rotationDegrees(tilt.yaw()));
         pose.translate(0, -half, 0);
         PUSHED.add(entity.getId());

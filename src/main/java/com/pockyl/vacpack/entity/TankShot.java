@@ -60,16 +60,16 @@ public final class TankShot extends Projectile {
     private int lastHitTick;
     private int slowTicks;
 
-    // Client-only "ragdoll" pose, in degrees: a somersault that is kicked by bounces and rolls with the movement on the
-    // ground, a decaying side wobble and the body pitch following the trajectory. Previous values for interpolation.
-    private float flip;
-    private float flipO;
-    private float flipSpeed;
-    private float wobble;
-    private float wobbleO;
-    private float wobbleEnergy = 16.0F;
-    private float aim;
-    private float aimO;
+    // Client-only ragdoll pose, in degrees. Pitch (nose up/down) and roll (onto its side) are driven by damped springs
+    // towards a target pose; impacts only add angular velocity, so the body flops smoothly and never snaps or spins.
+    private float pitch;
+    private float pitchO;
+    private float pitchVelocity;
+    private float roll;
+    private float rollO;
+    private float rollVelocity;
+    /** Which side the ragdoll falls onto when sliding: +1 or -1, chosen once per shot. */
+    private float side;
 
     /** Client-only: remaining offset to the server position, applied gradually instead of snapping. */
     private Vec3 correction = Vec3.ZERO;
@@ -229,7 +229,6 @@ public final class TankShot extends Projectile {
         }
         // Bounce off the mob, keeping some of the momentum sideways.
         setDeltaMovement(velocity.scale(-0.3).add(0, 0.2, 0));
-        flipSpeed += Math.copySign(20.0F, flipSpeed);
     }
 
     @Override
@@ -274,61 +273,62 @@ public final class TankShot extends Projectile {
     // Client pose
     // ------------------------------------------------------------------------------------------------
 
+    private static final float SPRING = 0.08F;
+    private static final float DAMPING = 0.8F;
+    private static final float MAX_ANGULAR_SPEED = 12.0F;
+
     private void tickPose(double impact) {
-        flipO = flip;
-        wobbleO = wobble;
-        aimO = aim;
+        pitchO = pitch;
+        rollO = roll;
         Vec3 velocity = getDeltaMovement();
-        // Forward = the direction the ragdoll faces; tumbling forward when moving forward keeps rotation consistent.
-        float yaw = getYRot() * Mth.DEG_TO_RAD;
-        double forwardSpeed = velocity.x * -Mth.sin(yaw) + velocity.z * Mth.cos(yaw);
-        float direction = forwardSpeed >= 0 ? 1.0F : -1.0F;
+        double horizontal = velocity.horizontalDistance();
         if (tickCount <= 1) {
-            flipSpeed = direction * (10.0F + random.nextFloat() * 5.0F);
+            side = random.nextBoolean() ? 1.0F : -1.0F;
+            pitchVelocity = -6.0F;
+        }
+
+        float pitchTarget;
+        float rollTarget;
+        if (!onGround()) {
+            // In the air the body leans gently with the trajectory.
+            pitchTarget = (float) Mth.clamp(-Math.toDegrees(Math.atan2(velocity.y, horizontal)), -30.0, 30.0) * 0.6F;
+            rollTarget = 0.0F;
+        } else {
+            // Sliding along the ground it lies on its side, getting up as it slows down.
+            pitchTarget = 0.0F;
+            rollTarget = side * 70.0F * (float) Math.min(horizontal / 0.35, 1.0);
         }
         if (impact > 0.15) {
-            // Bounces add to the tumble in the direction of travel (never reverse it abruptly) and to the wobble.
-            flipSpeed += direction * (float) Math.min(impact, 1.0) * 18.0F;
-            wobbleEnergy = Math.min(18.0F, wobbleEnergy + (float) impact * 12.0F);
+            float strength = (float) Math.min(impact, 1.0);
+            pitchVelocity += strength * 9.0F * (random.nextFloat() - 0.3F);
+            rollVelocity += strength * 7.0F * side;
         }
-        if (onGround()) {
-            // Rolling along the ground: spin eases towards the rolling speed.
-            float rolling = (float) forwardSpeed * 45.0F;
-            flipSpeed += (rolling - flipSpeed) * 0.15F;
-        }
-        flipSpeed = Mth.clamp(flipSpeed, -30.0F, 30.0F);
-        flip += flipSpeed;
-        flipSpeed *= 0.9F;
-        wobbleEnergy *= 0.94F;
-        wobble = wobbleEnergy * Mth.sin(tickCount * 0.6F);
-        // Pitch along the trajectory only while flying fast; bounces must not swing it from one extreme to the other.
-        float target = !onGround() && velocity.length() > 0.3
-                ? (float) Mth.clamp(-Math.toDegrees(Math.atan2(velocity.y, velocity.horizontalDistance())), -35.0, 35.0)
-                : 0.0F;
-        aim += (target - aim) * 0.1F;
 
+        pitchVelocity = Mth.clamp((pitchVelocity + (pitchTarget - pitch) * SPRING) * DAMPING, -MAX_ANGULAR_SPEED, MAX_ANGULAR_SPEED);
+        rollVelocity = Mth.clamp((rollVelocity + (rollTarget - roll) * SPRING) * DAMPING, -MAX_ANGULAR_SPEED, MAX_ANGULAR_SPEED);
+        pitch += pitchVelocity;
+        roll += rollVelocity;
+
+        float motion = (float) velocity.length();
         if (getDisplayMob() instanceof LivingEntity living) {
-            // Limp, gentle flailing that fades as the ragdoll slows down.
-            float flail = (float) Mth.clamp(velocity.length() * 0.8, 0.05, 0.5);
-            living.walkAnimation.update(flail, 0.4F);
+            // Limp limbs: a slow, small flail that fades as the ragdoll slows down.
+            living.walkAnimation.update(Mth.clamp(motion * 0.5F, 0.0F, 0.3F), 0.2F);
             living.tickCount++;
         }
         if (getDisplayMob() instanceof Slime slime) {
+            // Jelly: squash with the angular motion, smoothly.
             slime.oSquish = slime.squish;
-            slime.squish = wobbleEnergy / 40.0F * Mth.sin(tickCount * 0.9F);
+            float targetSquish = Mth.clamp((Math.abs(pitchVelocity) + Math.abs(rollVelocity)) / 30.0F, 0.0F, 0.5F);
+            slime.squish += (targetSquish - slime.squish) * 0.3F;
         }
     }
 
-    public float getFlip(float partialTick) {
-        return Mth.lerp(partialTick, flipO, flip);
+    public float getPitch(float partialTick) {
+        return Mth.lerp(partialTick, pitchO, pitch);
     }
 
-    public float getWobble(float partialTick) {
-        return Mth.lerp(partialTick, wobbleO, wobble);
-    }
-
-    public float getAim(float partialTick) {
-        return Mth.lerp(partialTick, aimO, aim);
+    public float getRoll(float partialTick) {
+        return Mth.lerp(partialTick, rollO, roll);
     }
 
     // ------------------------------------------------------------------------------------------------

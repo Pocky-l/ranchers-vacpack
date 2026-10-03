@@ -14,6 +14,8 @@ public final class ModParticles {
 
     /** Air wisp flying into the nozzle. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> VACUUM = register("vacuum");
+    /** Soft glowing dot of the suction vortex. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> VACUUM_DOT = register("vacuum_dot");
     /** Small ring popping at the nozzle when something is captured. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> CAPTURE_RING = register("capture_ring");
     /** Large expanding ring of a pulse wave. */
