@@ -539,12 +539,14 @@ public final class VacuumHandler {
             if (distance > range || (distance > 1.0 && toEntity.normalize().dot(look) < PULSE_CONE_DOT)) {
                 continue;
             }
-            double strength = Config.pulseStrength() * (1.0 - 0.6 * distance / range);
+            double strength = Config.pulseStrength() * (1.0 - 0.35 * distance / range);
             if (entity instanceof LivingEntity living) {
                 strength *= 1.0 - Mth.clamp(living.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE), 0.0, 1.0);
             }
             Vec3 direction = distance > 0.5 ? toEntity.normalize() : look;
-            Vec3 push = direction.scale(strength).add(0, 0.25 * strength, 0);
+            // Lift living things off the ground, otherwise ground friction eats the push at once.
+            double lift = entity instanceof LivingEntity ? 0.3 + 0.12 * strength : 0.15 * strength;
+            Vec3 push = direction.scale(strength).add(0, lift, 0);
             entity.setDeltaMovement(entity.getDeltaMovement().scale(0.2).add(push));
             entity.hasImpulse = true;
             entity.hurtMarked = true;

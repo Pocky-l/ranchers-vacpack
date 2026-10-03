@@ -97,10 +97,10 @@ public final class Config {
                 .define("enabled", true);
         PULSE_RANGE = BUILDER.translation(key("pulse_range"))
                 .comment("Reach of the pulse wave, in blocks.")
-                .defineInRange("range", 6.0, 1.0, 16.0);
+                .defineInRange("range", 10.0, 1.0, 24.0);
         PULSE_STRENGTH = BUILDER.translation(key("pulse_strength"))
                 .comment("Knockback strength of the pulse wave.")
-                .defineInRange("strength", 1.6, 0.1, 5.0);
+                .defineInRange("strength", 2.6, 0.1, 8.0);
         PULSE_COOLDOWN = BUILDER.translation(key("pulse_cooldown"))
                 .comment("Ticks between pulse waves.")
                 .defineInRange("cooldown", 16, 1, 200);
