@@ -21,6 +21,11 @@ sourceSets.main.resources {
 }
 
 repositories {
+    maven {
+        name = 'GeckoLib'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        content { includeGroup('software.bernie.geckolib') }
+    }
 }
 
 neoForge {
@@ -74,6 +79,7 @@ configurations {
 }
 
 dependencies {
+    implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
 }
 
 var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
@@ -89,6 +95,7 @@ var generateModMetadata = tasks.register('generateModMetadata', ProcessResources
             mod_authors            : mod_authors,
             mod_description        : mod_description,
             mod_url                : mod_url,
+            geckolib_version       : geckolib_version,
     ]
     inputs.properties replaceProperties
     expand replaceProperties
