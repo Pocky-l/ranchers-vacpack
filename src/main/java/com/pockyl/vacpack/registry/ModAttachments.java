@@ -23,6 +23,10 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<Shot>> SHOT = ATTACHMENTS.register(
             "shot", () -> AttachmentType.builder(() -> Shot.NONE).build());
 
+    /** Set on released mobs: their first landing after a shot deals no fall damage. */
+    public static final Supplier<AttachmentType<Boolean>> FALL_GUARD = ATTACHMENTS.register(
+            "fall_guard", () -> AttachmentType.builder(() -> false).build());
+
     private ModAttachments() {
     }
 

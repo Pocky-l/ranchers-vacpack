@@ -36,7 +36,8 @@ import com.pockyl.vacpack.vacuum.Shot;
  * after {@link #MAX_FLIGHT_TICKS} the payload is released as a real item entity or mob.
  */
 public final class TankShot extends ThrowableProjectile {
-    private static final int MAX_FLIGHT_TICKS = 40;
+    /** Safety limit; normally a shot flies until it hits something. */
+    private static final int MAX_FLIGHT_TICKS = 200;
     private static final EntityDataAccessor<ItemStack> ITEM = SynchedEntityData.defineId(TankShot.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<CompoundTag> MOB = SynchedEntityData.defineId(TankShot.class, EntityDataSerializers.COMPOUND_TAG);
 
@@ -106,8 +107,8 @@ public final class TankShot extends ThrowableProjectile {
         super.tick();
         if (level().isClientSide()) {
             tickPose();
-        } else if (isAlive() && tickCount > MAX_FLIGHT_TICKS) {
-            release(center(), getDeltaMovement().scale(0.3), false);
+        } else if (isAlive() && (tickCount > MAX_FLIGHT_TICKS || isInWater())) {
+            release(center(), getDeltaMovement(), false);
         }
     }
 
@@ -171,7 +172,8 @@ public final class TankShot extends ThrowableProjectile {
             target.hurt(damageSources().thrown(this, getOwner()), (float) Config.shotDamage());
         }
         target.knockback(carriesMob() ? 0.9 : 0.6, -velocity.x, -velocity.z);
-        release(center().subtract(velocity.normalize().scale(0.4)), velocity.scale(-0.15).add(0, 0.2, 0), true);
+        // The shot keeps half of its momentum and bounces up a little.
+        release(center().subtract(velocity.normalize().scale(0.4)), velocity.scale(0.5).add(0, 0.15, 0), true);
     }
 
     @Override
@@ -182,8 +184,10 @@ public final class TankShot extends ThrowableProjectile {
         }
         Vec3 normal = Vec3.atLowerCornerOf(result.getDirection().getNormal());
         Vec3 velocity = getDeltaMovement();
-        // Bounce off the surface a little.
-        Vec3 bounce = velocity.subtract(normal.scale(2 * velocity.dot(normal))).scale(0.25);
+        // Keep the momentum along the surface (slide along the floor, drop down a wall) and bounce off it slightly.
+        double into = velocity.dot(normal);
+        Vec3 along = velocity.subtract(normal.scale(into));
+        Vec3 bounce = along.scale(0.85).subtract(normal.scale(into * 0.2));
         release(result.getLocation().add(normal.scale(0.3)), bounce, true);
     }
 
@@ -209,7 +213,10 @@ public final class TankShot extends ThrowableProjectile {
             } else {
                 mob.setDeltaMovement(velocity);
                 mob.resetFallDistance();
+                mob.hasImpulse = true;
+                mob.hurtMarked = true;
                 mob.setData(ModAttachments.SHOT, shot);
+                mob.setData(ModAttachments.FALL_GUARD, true);
                 level.addFreshEntity(mob);
                 // Lets clients ease the mob out of its mid-air pose instead of snapping upright.
                 PacketDistributor.sendToPlayersTrackingEntity(this, new ShotLandedPayload(getId(), mob.getId()));

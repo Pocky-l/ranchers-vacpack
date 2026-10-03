@@ -1,16 +1,21 @@
 package com.pockyl.vacpack.event;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import com.pockyl.vacpack.Vacpack;
 import com.pockyl.vacpack.registry.ModItems;
+import com.pockyl.vacpack.vacuum.ShotProtection;
 import com.pockyl.vacpack.vacuum.VacuumHandler;
 
 public final class VacpackEvents {
@@ -27,6 +32,27 @@ public final class VacpackEvents {
         public static void onPlayerTick(PlayerTickEvent.Post event) {
             if (!event.getEntity().level().isClientSide()) {
                 VacuumHandler.tick(event.getEntity());
+            }
+        }
+
+        @SubscribeEvent
+        public static void onIncomingDamage(LivingIncomingDamageEvent event) {
+            if (ShotProtection.isInvulnerable(event.getEntity())) {
+                event.setCanceled(true);
+            }
+        }
+
+        @SubscribeEvent
+        public static void onFall(LivingFallEvent event) {
+            if (ShotProtection.consumeFallGuard(event.getEntity())) {
+                event.setCanceled(true);
+            }
+        }
+
+        @SubscribeEvent
+        public static void onLivingTick(EntityTickEvent.Post event) {
+            if (event.getEntity() instanceof LivingEntity living && !living.level().isClientSide()) {
+                ShotProtection.tick(living);
             }
         }
 

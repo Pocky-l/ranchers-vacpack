@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Slime;
@@ -129,6 +130,31 @@ public final class ModGameTests {
         helper.assertTrue("Pinky".equals(released.getFirst().getCustomName().getString()), "the slime keeps its name");
         helper.assertTrue(shot.isRemoved(), "the projectile is gone");
         released.forEach(Slime::discard);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void releasedMobKeepsMomentumAndIsProtected(GameTestHelper helper) {
+        Player player = player(helper);
+        CompoundTag chicken = new CompoundTag();
+        chicken.putString("id", "minecraft:chicken");
+        TankShot shot = TankShot.ofMob(helper.getLevel(), player, chicken);
+        Vec3 pos = helper.absoluteVec(new Vec3(2.5, 6.0, 0.5));
+        shot.moveTo(pos.x, pos.y, pos.z, 0, 0);
+        helper.getLevel().addFreshEntity(shot);
+
+        shot.release(pos, new Vec3(0.9, 0.2, 0), false);
+
+        var released = helper.getLevel().getEntitiesOfClass(Chicken.class, new AABB(pos, pos).inflate(2), Chicken::isAlive);
+        helper.assertTrue(released.size() == 1, "the chicken is released");
+        Chicken bird = released.getFirst();
+        helper.assertTrue(bird.getDeltaMovement().x > 0.8, "the chicken keeps its momentum");
+        float health = bird.getHealth();
+        bird.hurt(helper.getLevel().damageSources().generic(), 2.0F);
+        helper.assertTrue(bird.getHealth() == health, "the chicken is invulnerable right after release");
+        helper.assertTrue(!bird.causeFallDamage(12.0F, 1.0F, helper.getLevel().damageSources().fall()),
+                "the first landing deals no fall damage");
+        bird.discard();
         helper.succeed();
     }
 
