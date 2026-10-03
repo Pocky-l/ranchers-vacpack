@@ -6,6 +6,8 @@ import net.minecraft.core.BlockPos;
 public final class VacuumState {
     boolean vacuuming;
     boolean shooting;
+    /** Set when the shoot button is pressed, cleared by the first shot; a pulse wave needs a fresh press. */
+    boolean freshPress;
     int shootCooldown;
     int fullWarningCooldown;
     BlockPos harvestPos;

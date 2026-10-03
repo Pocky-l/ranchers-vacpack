@@ -51,7 +51,7 @@ public final class BurstParticle extends TextureSheetParticle {
         @Override
         public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z,
                                        double xd, double yd, double zd) {
-            return new BurstParticle(level, x, y, z, xd, yd, zd, sprites, 6, 0.15F, 1.5F, 0.9F);
+            return new BurstParticle(level, x, y, z, xd, yd, zd, sprites, 6, 0.07F, 1.2F, 0.8F);
         }
     }
 
@@ -59,7 +59,7 @@ public final class BurstParticle extends TextureSheetParticle {
         @Override
         public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z,
                                        double xd, double yd, double zd) {
-            return new BurstParticle(level, x, y, z, xd, yd, zd, sprites, 10, 0.5F, 3.0F, 0.8F);
+            return new BurstParticle(level, x, y, z, xd, yd, zd, sprites, 10, 0.28F, 2.0F, 0.6F);
         }
     }
 
@@ -67,7 +67,7 @@ public final class BurstParticle extends TextureSheetParticle {
         @Override
         public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z,
                                        double xd, double yd, double zd) {
-            return new BurstParticle(level, x, y, z, xd, yd, zd, sprites, 8, 0.12F, 1.2F, 0.85F);
+            return new BurstParticle(level, x, y, z, xd, yd, zd, sprites, 8, 0.07F, 1.0F, 0.7F);
         }
     }
 }

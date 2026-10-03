@@ -69,6 +69,9 @@ public final class VacuumHandler {
 
     public static void setInput(Player player, boolean vacuum, boolean shoot) {
         VacuumState state = player.getData(ModAttachments.VACUUM_STATE);
+        if (shoot && !state.shooting) {
+            state.freshPress = true;
+        }
         state.shooting = shoot;
         ItemStack stack = player.getMainHandItem();
         setVacuuming(player, state, vacuum && stack.getItem() instanceof VacpackItem);
@@ -256,7 +259,7 @@ public final class VacuumHandler {
         } else {
             playSound(player, ModSounds.CAPTURE.get(), 0.6F, 0.9F + player.getRandom().nextFloat() * 0.35F);
         }
-        particles(player, ModParticles.CAPTURE_RING.get(), nozzle, 1, 0, 0);
+        particles(player, ModParticles.CAPTURE_RING.get(), nozzle.add(player.getLookAngle().scale(0.6)), 1, 0, 0);
     }
 
     public static boolean canVacuumItem(ItemEntity item) {
@@ -471,8 +474,16 @@ public final class VacuumHandler {
             return HELD_SHOT_COOLDOWN;
         }
 
+        // Holding the button empties the slot and then stops; a pulse wave only fires on a fresh press.
+        boolean freshPress = state == null || state.freshPress;
+        if (state != null) {
+            state.freshPress = false;
+        }
         VacTank.Taken taken = tank(stack).takeFromSelected();
         if (taken.isEmpty()) {
+            if (!freshPress) {
+                return EMPTY_SHOT_COOLDOWN;
+            }
             if (Config.pulseEnabled()) {
                 pulse(player, stack);
                 return Config.pulseCooldown();
@@ -496,8 +507,9 @@ public final class VacuumHandler {
     }
 
     private static void shotEffects(Player player, ItemStack stack, Vec3 origin) {
-        Vec3 puff = origin.add(player.getLookAngle().scale(0.4));
-        particles(player, ModParticles.SHOT_PUFF.get(), puff, 3, 0.06, 0.02);
+        // Far enough in front of the camera that first-person view is not covered.
+        Vec3 puff = origin.add(player.getLookAngle().scale(0.9));
+        particles(player, ModParticles.SHOT_PUFF.get(), puff, 2, 0.04, 0.02);
         playSound(player, ModSounds.SHOOT.get(), 0.8F, 0.9F + player.getRandom().nextFloat() * 0.25F);
         triggerRecoil(player, stack);
     }
@@ -527,13 +539,14 @@ public final class VacuumHandler {
             entity.hurtMarked = true;
         }
 
+        // Rings start a couple of blocks out so they do not cover the shooter's screen.
         Vec3 nozzle = nozzlePos(player);
-        for (int i = 1; i <= 4; i++) {
-            Vec3 p = nozzle.add(look.scale(i * range / 5.0));
+        for (double distance = 2.5; distance <= range; distance += 1.5) {
+            Vec3 p = nozzle.add(look.scale(distance));
             particles(player, ModParticles.PULSE_RING.get(), p, 1, 0, 0);
-            particles(player, ParticleTypes.SMALL_GUST, p, 2, 0.25 * i, 0);
+            particles(player, ParticleTypes.SMALL_GUST, p, 1, 0.15 * distance, 0);
         }
-        playSound(player, ModSounds.PULSE.get(), 0.9F, 0.95F + player.getRandom().nextFloat() * 0.1F);
+        playSound(player, ModSounds.PULSE.get(), 0.45F, 0.95F + player.getRandom().nextFloat() * 0.1F);
         playAnimation(player, stack, VacpackItem.RECOIL_CONTROLLER, VacpackItem.PULSE_ANIM);
     }
 
