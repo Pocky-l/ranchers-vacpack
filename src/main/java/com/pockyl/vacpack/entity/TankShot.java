@@ -71,6 +71,9 @@ public final class TankShot extends Projectile {
     private float aim;
     private float aimO;
 
+    /** Client-only: remaining offset to the server position, applied gradually instead of snapping. */
+    private Vec3 correction = Vec3.ZERO;
+
     public TankShot(EntityType<? extends TankShot> type, Level level) {
         super(type, level);
     }
@@ -145,6 +148,11 @@ public final class TankShot extends Projectile {
     @Override
     public void tick() {
         super.tick();
+        if (level().isClientSide() && correction.lengthSqr() > 1.0E-6) {
+            Vec3 step = correction.scale(0.12);
+            setPos(position().add(step));
+            correction = correction.subtract(step);
+        }
         Vec3 before = position();
         Vec3 velocity = getDeltaMovement();
 
@@ -221,7 +229,7 @@ public final class TankShot extends Projectile {
         }
         // Bounce off the mob, keeping some of the momentum sideways.
         setDeltaMovement(velocity.scale(-0.3).add(0, 0.2, 0));
-        flipSpeed += 25.0F;
+        flipSpeed += Math.copySign(20.0F, flipSpeed);
     }
 
     @Override
@@ -229,15 +237,27 @@ public final class TankShot extends Projectile {
         return super.canHitEntity(target) && !(target instanceof TankShot);
     }
 
-    // The client simulates the movement itself; hard snapping to slightly stale server positions makes ragdolls jitter,
-    // so small differences are corrected softly and only large ones snap.
+    // The client runs the same simulation. Server positions arrive a few ticks late, so a fast ragdoll is always a bit
+    // "behind" in them; snapping to them, or even partially correcting each packet, is what made the flight jerky.
+    // Differences explained by that delay are ignored, real divergence is blended in over several ticks, and only a
+    // large one snaps.
     @Override
     public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
-        double distanceSqr = position().distanceToSqr(x, y, z);
-        if (distanceSqr > 9.0) {
+        Vec3 offset = new Vec3(x, y, z).subtract(position());
+        double tolerance = 0.3 + getDeltaMovement().length() * 3.0;
+        if (offset.length() > 4.0) {
+            correction = Vec3.ZERO;
             super.lerpTo(x, y, z, yRot, xRot, steps);
-        } else if (distanceSqr > 0.04) {
-            setPos(position().lerp(new Vec3(x, y, z), 0.3));
+        } else if (offset.length() > tolerance) {
+            correction = offset;
+        }
+    }
+
+    // Server velocity updates are just as stale; only take them when something pushed the ragdoll (e.g. a pulse wave).
+    @Override
+    public void lerpMotion(double x, double y, double z) {
+        if (new Vec3(x, y, z).distanceTo(getDeltaMovement()) > 0.6) {
+            super.lerpMotion(x, y, z);
         }
     }
 
@@ -258,32 +278,39 @@ public final class TankShot extends Projectile {
         flipO = flip;
         wobbleO = wobble;
         aimO = aim;
-        if (tickCount <= 1) {
-            flipSpeed = (random.nextBoolean() ? 1 : -1) * (14.0F + random.nextFloat() * 8.0F);
-        }
         Vec3 velocity = getDeltaMovement();
+        // Forward = the direction the ragdoll faces; tumbling forward when moving forward keeps rotation consistent.
+        float yaw = getYRot() * Mth.DEG_TO_RAD;
+        double forwardSpeed = velocity.x * -Mth.sin(yaw) + velocity.z * Mth.cos(yaw);
+        float direction = forwardSpeed >= 0 ? 1.0F : -1.0F;
+        if (tickCount <= 1) {
+            flipSpeed = direction * (10.0F + random.nextFloat() * 5.0F);
+        }
         if (impact > 0.15) {
-            // Bounces kick the ragdoll into a new tumble and wobble.
-            flipSpeed += (random.nextBoolean() ? 1 : -1) * (float) impact * 40.0F;
-            wobbleEnergy = Math.min(24.0F, wobbleEnergy + (float) impact * 20.0F);
+            // Bounces add to the tumble in the direction of travel (never reverse it abruptly) and to the wobble.
+            flipSpeed += direction * (float) Math.min(impact, 1.0) * 18.0F;
+            wobbleEnergy = Math.min(18.0F, wobbleEnergy + (float) impact * 12.0F);
         }
         if (onGround()) {
-            // Rolling along the ground: spin follows the horizontal speed.
-            float roll = (float) velocity.horizontalDistance() * 60.0F;
-            flipSpeed += (Math.copySign(roll, flipSpeed == 0 ? 1 : flipSpeed) - flipSpeed) * 0.3F;
+            // Rolling along the ground: spin eases towards the rolling speed.
+            float rolling = (float) forwardSpeed * 45.0F;
+            flipSpeed += (rolling - flipSpeed) * 0.15F;
         }
+        flipSpeed = Mth.clamp(flipSpeed, -30.0F, 30.0F);
         flip += flipSpeed;
-        flipSpeed *= 0.88F;
-        wobbleEnergy *= 0.93F;
-        wobble = wobbleEnergy * Mth.sin(tickCount * 0.75F);
-        float target = onGround() ? 0.0F
-                : (float) Mth.clamp(-Math.toDegrees(Math.atan2(velocity.y, velocity.horizontalDistance())), -55.0, 55.0);
-        aim += (target - aim) * 0.25F;
+        flipSpeed *= 0.9F;
+        wobbleEnergy *= 0.94F;
+        wobble = wobbleEnergy * Mth.sin(tickCount * 0.6F);
+        // Pitch along the trajectory only while flying fast; bounces must not swing it from one extreme to the other.
+        float target = !onGround() && velocity.length() > 0.3
+                ? (float) Mth.clamp(-Math.toDegrees(Math.atan2(velocity.y, velocity.horizontalDistance())), -35.0, 35.0)
+                : 0.0F;
+        aim += (target - aim) * 0.1F;
 
         if (getDisplayMob() instanceof LivingEntity living) {
-            // Limbs flail while flying, calm down when barely moving.
-            float flail = (float) Mth.clamp(velocity.length() * 2.0, 0.2, 1.2);
-            living.walkAnimation.update(flail, 0.6F);
+            // Limp, gentle flailing that fades as the ragdoll slows down.
+            float flail = (float) Mth.clamp(velocity.length() * 0.8, 0.05, 0.5);
+            living.walkAnimation.update(flail, 0.4F);
             living.tickCount++;
         }
         if (getDisplayMob() instanceof Slime slime) {
