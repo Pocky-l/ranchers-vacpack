@@ -4,7 +4,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
  * Server config: synced to clients, so the HUD shows the server's slot count.
- * Read values through the accessors — they fall back to defaults while no world is loaded.
+ * Read values through the accessors вЂ” they fall back to defaults while no world is loaded.
  */
 public final class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
@@ -16,6 +16,7 @@ public final class Config {
     private static final ModConfigSpec.BooleanValue VACUUM_ITEMS;
     private static final ModConfigSpec.BooleanValue VACUUM_MOBS;
     private static final ModConfigSpec.DoubleValue MAX_MOB_SIZE;
+    private static final ModConfigSpec.BooleanValue HARVEST_BERRIES;
 
     private static final ModConfigSpec.IntValue SLOT_COUNT;
     private static final ModConfigSpec.IntValue ITEM_CAPACITY;
@@ -23,18 +24,24 @@ public final class Config {
 
     private static final ModConfigSpec.DoubleValue SHOOT_SPEED;
     private static final ModConfigSpec.IntValue SHOOT_COOLDOWN;
+    private static final ModConfigSpec.DoubleValue SHOT_DAMAGE;
+
+    private static final ModConfigSpec.BooleanValue PULSE_ENABLED;
+    private static final ModConfigSpec.DoubleValue PULSE_RANGE;
+    private static final ModConfigSpec.DoubleValue PULSE_STRENGTH;
+    private static final ModConfigSpec.IntValue PULSE_COOLDOWN;
 
     static {
         BUILDER.translation(key("vacuum")).push("vacuum");
         RANGE = BUILDER.translation(key("range"))
                 .comment("How far the vacpack reaches, in blocks.")
-                .defineInRange("range", 8.0, 2.0, 32.0);
+                .defineInRange("range", 10.0, 2.0, 32.0);
         CONE_ANGLE = BUILDER.translation(key("cone_angle"))
                 .comment("Half-angle of the suction cone, in degrees.")
-                .defineInRange("coneAngle", 25, 5, 90);
+                .defineInRange("coneAngle", 30, 5, 90);
         PULL_STRENGTH = BUILDER.translation(key("pull_strength"))
                 .comment("How hard entities are pulled towards the nozzle each tick.")
-                .defineInRange("pullStrength", 0.3, 0.05, 2.0);
+                .defineInRange("pullStrength", 0.35, 0.05, 2.0);
         CAPTURE_DISTANCE = BUILDER.translation(key("capture_distance"))
                 .comment("Distance from the nozzle at which an entity is sucked into the tank.")
                 .defineInRange("captureDistance", 1.4, 0.5, 4.0);
@@ -47,6 +54,9 @@ public final class Config {
         MAX_MOB_SIZE = BUILDER.translation(key("max_mob_size"))
                 .comment("Mobs wider or taller than this (in blocks) cannot be vacuumed, e.g. big slimes.")
                 .defineInRange("maxMobSize", 1.0, 0.1, 4.0);
+        HARVEST_BERRIES = BUILDER.translation(key("harvest_berries"))
+                .comment("Whether aiming the vacpack at ripe sweet berry bushes and glow berry vines picks their berries.")
+                .define("harvestBerries", true);
         BUILDER.pop();
 
         BUILDER.translation(key("tank")).push("tank");
@@ -68,6 +78,24 @@ public final class Config {
         SHOOT_COOLDOWN = BUILDER.translation(key("shoot_cooldown"))
                 .comment("Ticks between shots while the attack button is held.")
                 .defineInRange("shootCooldown", 4, 1, 40);
+        SHOT_DAMAGE = BUILDER.translation(key("shot_damage"))
+                .comment("Damage dealt by a shot item hitting a mob. 0 only knocks back.")
+                .defineInRange("shotDamage", 2.0, 0.0, 20.0);
+        BUILDER.pop();
+
+        BUILDER.translation(key("pulse")).push("pulseWave");
+        PULSE_ENABLED = BUILDER.translation(key("pulse_enabled"))
+                .comment("Shooting with an empty slot releases a pulse of air that knocks everything in front away.")
+                .define("enabled", true);
+        PULSE_RANGE = BUILDER.translation(key("pulse_range"))
+                .comment("Reach of the pulse wave, in blocks.")
+                .defineInRange("range", 6.0, 1.0, 16.0);
+        PULSE_STRENGTH = BUILDER.translation(key("pulse_strength"))
+                .comment("Knockback strength of the pulse wave.")
+                .defineInRange("strength", 1.6, 0.1, 5.0);
+        PULSE_COOLDOWN = BUILDER.translation(key("pulse_cooldown"))
+                .comment("Ticks between pulse waves.")
+                .defineInRange("cooldown", 16, 1, 200);
         BUILDER.pop();
     }
 
@@ -112,6 +140,10 @@ public final class Config {
         return get(MAX_MOB_SIZE);
     }
 
+    public static boolean harvestBerries() {
+        return get(HARVEST_BERRIES);
+    }
+
     public static int slotCount() {
         return get(SLOT_COUNT);
     }
@@ -130,5 +162,25 @@ public final class Config {
 
     public static int shootCooldown() {
         return get(SHOOT_COOLDOWN);
+    }
+
+    public static double shotDamage() {
+        return get(SHOT_DAMAGE);
+    }
+
+    public static boolean pulseEnabled() {
+        return get(PULSE_ENABLED);
+    }
+
+    public static double pulseRange() {
+        return get(PULSE_RANGE);
+    }
+
+    public static double pulseStrength() {
+        return get(PULSE_STRENGTH);
+    }
+
+    public static int pulseCooldown() {
+        return get(PULSE_COOLDOWN);
     }
 }

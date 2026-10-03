@@ -2,7 +2,7 @@
   "item.vacpack.vacpack": "Vacpack",
   "tooltip.vacpack.empty": "Tank is empty",
   "tooltip.vacpack.slot": "%s x%s",
-  "tooltip.vacpack.controls": "Hold Use to vacuum, Attack to shoot. Switch slots with R or Sneak + Scroll.",
+  "tooltip.vacpack.controls": "Hold Use to vacuum, Attack to shoot. An empty slot fires a pulse wave. Switch slots with R or Sneak + Scroll.",
   "key.categories.vacpack": "Rancher's Vacpack",
   "key.vacpack.cycle_slot": "Next Tank Slot",
   "vacpack.configuration.title": "Rancher's Vacpack Configuration",
@@ -20,5 +20,17 @@
   "vacpack.configuration.mob_capacity": "Mobs per Slot",
   "vacpack.configuration.shooting": "Shooting",
   "vacpack.configuration.shoot_speed": "Shot Speed",
-  "vacpack.configuration.shoot_cooldown": "Shot Cooldown"
+  "vacpack.configuration.shoot_cooldown": "Shot Cooldown",
+  "subtitles.vacpack.vacuum": "Vacpack whirs",
+  "subtitles.vacpack.capture": "Vacpack slurps",
+  "subtitles.vacpack.shoot": "Vacpack fires",
+  "subtitles.vacpack.pulse": "Pulse wave blasts",
+  "subtitles.vacpack.tank_full": "Vacpack tank full",
+  "vacpack.configuration.harvest_berries": "Harvest Berries",
+  "vacpack.configuration.shot_damage": "Shot Damage",
+  "vacpack.configuration.pulse": "Pulse Wave",
+  "vacpack.configuration.pulse_enabled": "Enabled",
+  "vacpack.configuration.pulse_range": "Range",
+  "vacpack.configuration.pulse_strength": "Strength",
+  "vacpack.configuration.pulse_cooldown": "Cooldown"
 }

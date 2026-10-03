@@ -2,7 +2,7 @@
   "item.vacpack.vacpack": "Вакпак",
   "tooltip.vacpack.empty": "Бак пуст",
   "tooltip.vacpack.slot": "%s x%s",
-  "tooltip.vacpack.controls": "Удерживайте «Использовать», чтобы всасывать, «Атаковать» — чтобы стрелять. Слоты: R или Shift + колёсико.",
+  "tooltip.vacpack.controls": "Удерживайте «Использовать», чтобы всасывать, «Атаковать» — чтобы стрелять. Пустой слот даёт воздушный импульс. Слоты: R или Shift + колёсико.",
   "key.categories.vacpack": "Rancher's Vacpack",
   "key.vacpack.cycle_slot": "Следующий слот бака",
   "vacpack.configuration.title": "Настройки Rancher's Vacpack",
@@ -20,5 +20,17 @@
   "vacpack.configuration.mob_capacity": "Мобов в слоте",
   "vacpack.configuration.shooting": "Стрельба",
   "vacpack.configuration.shoot_speed": "Скорость выстрела",
-  "vacpack.configuration.shoot_cooldown": "Задержка выстрела"
+  "vacpack.configuration.shoot_cooldown": "Задержка выстрела",
+  "subtitles.vacpack.vacuum": "Вакпак гудит",
+  "subtitles.vacpack.capture": "Вакпак всасывает",
+  "subtitles.vacpack.shoot": "Вакпак стреляет",
+  "subtitles.vacpack.pulse": "Воздушный импульс",
+  "subtitles.vacpack.tank_full": "Бак вакпака полон",
+  "vacpack.configuration.harvest_berries": "Собирать ягоды",
+  "vacpack.configuration.shot_damage": "Урон выстрела",
+  "vacpack.configuration.pulse": "Воздушный импульс",
+  "vacpack.configuration.pulse_enabled": "Включён",
+  "vacpack.configuration.pulse_range": "Дальность",
+  "vacpack.configuration.pulse_strength": "Сила",
+  "vacpack.configuration.pulse_cooldown": "Перезарядка"
 }

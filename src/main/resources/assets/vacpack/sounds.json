@@ -1,0 +1,32 @@
+{
+  "vacuum_loop": {
+    "subtitle": "subtitles.vacpack.vacuum",
+    "sounds": [
+      "vacpack:vacuum_loop"
+    ]
+  },
+  "capture": {
+    "subtitle": "subtitles.vacpack.capture",
+    "sounds": [
+      "vacpack:capture"
+    ]
+  },
+  "shoot": {
+    "subtitle": "subtitles.vacpack.shoot",
+    "sounds": [
+      "vacpack:shoot"
+    ]
+  },
+  "pulse": {
+    "subtitle": "subtitles.vacpack.pulse",
+    "sounds": [
+      "vacpack:pulse"
+    ]
+  },
+  "tank_full": {
+    "subtitle": "subtitles.vacpack.tank_full",
+    "sounds": [
+      "vacpack:tank_full"
+    ]
+  }
+}

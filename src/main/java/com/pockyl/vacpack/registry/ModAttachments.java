@@ -6,6 +6,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 import com.pockyl.vacpack.Vacpack;
+import com.pockyl.vacpack.vacuum.Shot;
 import com.pockyl.vacpack.vacuum.VacuumState;
 
 import java.util.function.Supplier;
@@ -18,9 +19,9 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<VacuumState>> VACUUM_STATE = ATTACHMENTS.register(
             "vacuum_state", () -> AttachmentType.builder(VacuumState::new).build());
 
-    /** Game time at which a mob was shot out of a vacpack; such mobs are briefly immune to suction. */
-    public static final Supplier<AttachmentType<Long>> SHOT_AT = ATTACHMENTS.register(
-            "shot_at", () -> AttachmentType.builder(() -> Long.MIN_VALUE).build());
+    /** Set on items and mobs shot out of a vacpack: they are briefly immune to suction and shot items can hit mobs. */
+    public static final Supplier<AttachmentType<Shot>> SHOT = ATTACHMENTS.register(
+            "shot", () -> AttachmentType.builder(() -> Shot.NONE).build());
 
     private ModAttachments() {
     }

@@ -27,6 +27,9 @@ public final class TankHud implements LayeredDraw.Layer {
     private static final int SELECTED_BORDER = 0xFF6FD3FF;
     private static final int TEXT_COLOR = 0xFFFFFF;
     private static final int FULL_COLOR = 0xFFD86F;
+    private static final int GAUGE_BACKGROUND = 0xFF202830;
+    private static final int GAUGE_FILL = 0xFF6FD3FF;
+    private static final int GAUGE_FULL = 0xFFFFD86F;
 
     @Override
     public void render(GuiGraphics graphics, DeltaTracker deltaTracker) {
@@ -60,10 +63,15 @@ public final class TankHud implements LayeredDraw.Layer {
             }
             graphics.renderItem(icon(slot), x + 1, y + 1);
             int capacity = slot.holdsMobs() ? Config.mobCapacity() : Config.itemCapacity();
+            // Fill gauge along the bottom edge of the slot.
+            int gaugeWidth = SLOT_SIZE - 3;
+            int filled = Math.max(1, Math.round(gaugeWidth * Math.min(1.0F, (float) slot.amount() / capacity)));
+            graphics.fill(x + 1, y + SLOT_SIZE - 3, x + 1 + gaugeWidth, y + SLOT_SIZE - 2, GAUGE_BACKGROUND);
+            graphics.fill(x + 1, y + SLOT_SIZE - 3, x + 1 + filled, y + SLOT_SIZE - 2, slot.amount() >= capacity ? GAUGE_FULL : GAUGE_FILL);
             String count = String.valueOf(slot.amount());
             graphics.pose().pushPose();
             graphics.pose().translate(0, 0, 200);
-            graphics.drawString(font, count, x + SLOT_SIZE - 1 - font.width(count), y + SLOT_SIZE - 9,
+            graphics.drawString(font, count, x + SLOT_SIZE - 1 - font.width(count), y + SLOT_SIZE - 11,
                     slot.amount() >= capacity ? FULL_COLOR : TEXT_COLOR, true);
             graphics.pose().popPose();
         }

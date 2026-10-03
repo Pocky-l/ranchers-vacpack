@@ -1,27 +1,36 @@
 package com.pockyl.vacpack.gametest;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
+import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.Vacpack;
+import com.pockyl.vacpack.registry.ModAttachments;
 import com.pockyl.vacpack.registry.ModDataComponents;
 import com.pockyl.vacpack.registry.ModItems;
 import com.pockyl.vacpack.tank.VacTank;
+import com.pockyl.vacpack.vacuum.Shot;
+import com.pockyl.vacpack.vacuum.ShotImpacts;
 import com.pockyl.vacpack.vacuum.VacuumHandler;
+import com.pockyl.vacpack.vacuum.VacuumState;
 
 /**
  * In-game tests, run headless by {@code gradlew runGameTestServer}.
@@ -107,15 +116,88 @@ public final class ModGameTests {
         slime.setCustomName(Component.literal("Pinky"));
         VacuumHandler.vacuumTick(player, vacpack);
 
-        boolean shot = VacuumHandler.shoot(player, vacpack);
+        VacuumHandler.shoot(player, vacpack);
 
-        helper.assertTrue(shot, "something was shot");
         AABB area = new AABB(player.blockPosition()).inflate(4);
         var released = helper.getLevel().getEntitiesOfClass(Slime.class, area, Slime::isAlive);
         helper.assertTrue(released.size() == 1, "exactly one slime is released");
         helper.assertTrue("Pinky".equals(released.getFirst().getCustomName().getString()), "the slime keeps its name");
         helper.assertTrue(vacpack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY).isEmpty(), "the tank is empty again");
         released.forEach(Slime::discard);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void suctionPullsDistantItemTowardsNozzle(GameTestHelper helper) {
+        Player player = player(helper);
+        Vec3 nozzle = VacuumHandler.nozzlePos(player);
+        Vec3 start = player.getEyePosition().add(player.getLookAngle().scale(6));
+        ItemEntity item = new ItemEntity(helper.getLevel(), start.x, start.y, start.z, new ItemStack(Items.APPLE));
+        item.setDeltaMovement(Vec3.ZERO);
+        helper.getLevel().addFreshEntity(item);
+
+        VacuumHandler.vacuumTick(player, player.getMainHandItem());
+
+        Vec3 motion = item.getDeltaMovement();
+        helper.assertTrue(motion.dot(nozzle.subtract(start)) > 0, "the item moves towards the nozzle");
+        helper.assertTrue(motion.y >= item.getGravity() - 1.0E-6 || motion.y > 0, "gravity is cancelled so the item floats");
+        item.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void emptySlotShotReleasesPulseWave(GameTestHelper helper) {
+        Player player = player(helper);
+        Vec3 ahead = player.position().add(player.getLookAngle().scale(3));
+        Cow cow = EntityType.COW.create(helper.getLevel());
+        cow.moveTo(ahead.x, ahead.y, ahead.z, 0, 0);
+        cow.setNoAi(true);
+        helper.getLevel().addFreshEntity(cow);
+
+        int cooldown = VacuumHandler.shoot(player, player.getMainHandItem());
+
+        helper.assertTrue(cooldown == Config.pulseCooldown(), "an empty slot fires a pulse wave");
+        helper.assertTrue(cow.getDeltaMovement().dot(player.getLookAngle()) > 0.5, "the cow is blown away");
+        cow.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void vacuumPicksRipeSweetBerries(GameTestHelper helper) {
+        Player player = player(helper);
+        BlockPos bush = new BlockPos(3, 5, 0);
+        helper.setBlock(bush, Blocks.SWEET_BERRY_BUSH.defaultBlockState().setValue(SweetBerryBushBlock.AGE, 3));
+        VacuumState state = new VacuumState();
+
+        for (int i = 0; i < 10; i++) {
+            VacuumHandler.harvestTick(player, state);
+        }
+
+        helper.assertBlockProperty(bush, SweetBerryBushBlock.AGE, 1);
+        AABB around = new AABB(helper.absolutePos(bush)).inflate(1.5);
+        helper.assertTrue(!helper.getLevel().getEntitiesOfClass(ItemEntity.class, around, e -> e.getItem().is(Items.SWEET_BERRIES)).isEmpty(),
+                "berries pop off the bush");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void shotItemHitsMob(GameTestHelper helper) {
+        Player player = player(helper);
+        Cow cow = EntityType.COW.create(helper.getLevel());
+        Vec3 pos = helper.absoluteVec(new Vec3(3.5, 2.0, 0.5));
+        cow.moveTo(pos.x, pos.y, pos.z, 0, 0);
+        cow.setNoAi(true);
+        helper.getLevel().addFreshEntity(cow);
+        ItemEntity item = new ItemEntity(helper.getLevel(), pos.x - 0.6, pos.y + 0.6, pos.z, new ItemStack(Items.COBBLESTONE), 1.2, 0, 0);
+        item.setData(ModAttachments.SHOT, new Shot(player.getUUID(), helper.getLevel().getGameTime()));
+        helper.getLevel().addFreshEntity(item);
+
+        ShotImpacts.tick(item);
+
+        helper.assertTrue(cow.getHealth() < cow.getMaxHealth(), "the cow takes damage");
+        helper.assertTrue(item.getExistingDataOrNull(ModAttachments.SHOT) == null, "an item hits only once");
+        cow.discard();
+        item.discard();
         helper.succeed();
     }
 

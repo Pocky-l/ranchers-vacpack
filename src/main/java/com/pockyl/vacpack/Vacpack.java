@@ -13,6 +13,7 @@ import com.pockyl.vacpack.registry.ModAttachments;
 import com.pockyl.vacpack.registry.ModDataComponents;
 import com.pockyl.vacpack.registry.ModItems;
 import com.pockyl.vacpack.registry.ModParticles;
+import com.pockyl.vacpack.registry.ModSounds;
 
 @Mod(Vacpack.MOD_ID)
 public final class Vacpack {
@@ -23,6 +24,7 @@ public final class Vacpack {
         ModDataComponents.register(modBus);
         ModItems.register(modBus);
         ModParticles.register(modBus);
+        ModSounds.register(modBus);
         ModAttachments.register(modBus);
         modBus.addListener(ModNetwork::register);
 
