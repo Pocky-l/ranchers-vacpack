@@ -41,5 +41,6 @@
   "subtitles.vacpack.vacuum_start": "Vacpack spins up",
   "subtitles.vacpack.vacuum_stop": "Vacpack winds down",
   "subtitles.vacpack.land": "Something lands",
-  "vacpack.configuration.vacuum_babies": "Vacuum Baby Mobs"
+  "vacpack.configuration.vacuum_babies": "Vacuum Baby Mobs",
+  "vacpack.configuration.pulse_self_knockback": "Self Knockback (Rocket Jump)"
 }

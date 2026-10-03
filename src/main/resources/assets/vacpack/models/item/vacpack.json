@@ -8,8 +8,8 @@
     "thirdperson_righthand": {
       "translation": [
         0,
-        -5.25,
-        -4.75
+        -2.5,
+        -6
       ],
       "scale": [
         0.6,
@@ -20,8 +20,8 @@
     "thirdperson_lefthand": {
       "translation": [
         0,
-        -5.25,
-        -4.75
+        -2.5,
+        -6
       ],
       "scale": [
         0.6,

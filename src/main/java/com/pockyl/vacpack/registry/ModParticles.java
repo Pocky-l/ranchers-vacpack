@@ -14,6 +14,8 @@ public final class ModParticles {
 
     /** Air wisp flying into the nozzle. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> VACUUM = register("vacuum");
+    /** Bubble that replaces airflow particles under water (vanilla bubble texture). */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> VACUUM_BUBBLE = register("vacuum_bubble");
     /** Soft glowing dot of the suction vortex. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> VACUUM_DOT = register("vacuum_dot");
     /** Small ring popping at the nozzle when something is captured. */

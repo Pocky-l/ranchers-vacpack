@@ -14,6 +14,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import org.joml.Quaternionf;
 
@@ -77,9 +78,20 @@ public final class LandingPoses {
         }
     }
 
+    /** Drops recoveries of mobs that were never rendered (e.g. out of view), so the map cannot grow. */
+    @SubscribeEvent
+    public static void onClientTick(ClientTickEvent.Post event) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level != null && !TILTS.isEmpty()) {
+            long now = level.getGameTime();
+            TILTS.values().removeIf(tilt -> now - tilt.startTick() > RECOVERY_TICKS * 4);
+        }
+    }
+
     @SubscribeEvent
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         TILTS.clear();
         PUSHED.clear();
+        MobIcons.clear();
     }
 }

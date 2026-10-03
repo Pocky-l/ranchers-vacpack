@@ -35,6 +35,7 @@ import com.pockyl.vacpack.registry.ModEntities;
 import com.pockyl.vacpack.registry.ModParticles;
 import com.pockyl.vacpack.registry.ModSounds;
 import com.pockyl.vacpack.vacuum.Shot;
+import com.pockyl.vacpack.vacuum.ShotProtection;
 
 /**
  * Something shot out of a vacpack, behaving like a ragdoll: an item or a stored mob that flies, bounces off blocks
@@ -439,6 +440,9 @@ public final class TankShot extends Projectile {
                 mob.hurtMarked = true;
                 mob.setData(ModAttachments.SHOT, shot);
                 mob.setData(ModAttachments.FALL_GUARD, true);
+                if (mob instanceof LivingEntity living) {
+                    ShotProtection.track(living);
+                }
                 level.addFreshEntity(mob);
                 // Lets clients ease the mob out of its ragdoll pose instead of snapping upright.
                 PacketDistributor.sendToPlayersTrackingEntity(this, new ShotLandedPayload(getId(), mob.getId()));

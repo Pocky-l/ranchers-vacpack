@@ -33,6 +33,7 @@ public final class Config {
     private static final ModConfigSpec.DoubleValue PULSE_RANGE;
     private static final ModConfigSpec.DoubleValue PULSE_STRENGTH;
     private static final ModConfigSpec.IntValue PULSE_COOLDOWN;
+    private static final ModConfigSpec.DoubleValue PULSE_SELF_KNOCKBACK;
 
     static {
         BUILDER.translation(key("vacuum")).push("vacuum");
@@ -108,6 +109,9 @@ public final class Config {
         PULSE_COOLDOWN = BUILDER.translation(key("pulse_cooldown"))
                 .comment("Ticks between pulse waves.")
                 .defineInRange("cooldown", 16, 1, 200);
+        PULSE_SELF_KNOCKBACK = BUILDER.translation(key("pulse_self_knockback"))
+                .comment("Pulse wave fired at a block close by pushes the player away from it (rocket jump). 0 disables.")
+                .defineInRange("selfKnockback", 1.3, 0.0, 4.0);
         BUILDER.pop();
     }
 
@@ -206,5 +210,9 @@ public final class Config {
 
     public static int pulseCooldown() {
         return get(PULSE_COOLDOWN);
+    }
+
+    public static double pulseSelfKnockback() {
+        return get(PULSE_SELF_KNOCKBACK);
     }
 }

@@ -44,6 +44,8 @@ neoForge {
 
         server {
             server()
+            // Separate directory, so a dedicated server can run next to the dev client.
+            gameDirectory = project.file('run-server')
             programArgument '--nogui'
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }

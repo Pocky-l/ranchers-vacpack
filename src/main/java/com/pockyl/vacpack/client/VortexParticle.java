@@ -1,6 +1,9 @@
 package com.pockyl.vacpack.client;
 
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
@@ -49,6 +52,11 @@ public final class VortexParticle extends TextureSheetParticle {
     private final float baseSize;
     private final float baseAlpha;
     private final float spin;
+    private final TextureAtlasSprite airSprite;
+    private final float airRed;
+    private final float airGreen;
+    private final float airBlue;
+    private boolean underwater;
     private boolean released;
     private int releasedAt;
     private float swallowFade = 1.0F;
@@ -91,6 +99,28 @@ public final class VortexParticle extends TextureSheetParticle {
         }
         setAlpha(0);
         pickSprite(sprites);
+        this.airSprite = sprite;
+        this.airRed = rCol;
+        this.airGreen = gCol;
+        this.airBlue = bCol;
+        updateMedium();
+    }
+
+    /** Under water the airflow shows as bubbles; back in the air they turn into wisps again. */
+    private void updateMedium() {
+        boolean inWater = level.getFluidState(BlockPos.containing(x, y, z)).is(FluidTags.WATER);
+        SpriteSet bubbles = ClientVacuumEffects.bubbleSprites();
+        if (inWater == underwater || bubbles == null) {
+            return;
+        }
+        underwater = inWater;
+        if (inWater) {
+            setSprite(bubbles.get(random));
+            setColor(1.0F, 1.0F, 1.0F);
+        } else {
+            setSprite(airSprite);
+            setColor(airRed, airGreen, airBlue);
+        }
     }
 
     @Override
@@ -157,11 +187,13 @@ public final class VortexParticle extends TextureSheetParticle {
         yd = velocity.y;
         zd = velocity.z;
         setPos(x + xd, y + yd, z + zd);
+        updateMedium();
 
         float fadeIn = Math.min(1.0F, age / 4.0F);
+        float mediumAlpha = underwater ? 1.4F : 1.0F;
         float releaseFade = released ? 1.0F - (age - releasedAt) / (float) FADE_AFTER_RELEASE : 1.0F;
-        setAlpha(baseAlpha * fadeIn * swallowFade * Math.max(releaseFade, 0.0F));
-        quadSize = baseSize * (0.55F + 0.45F * swallowFade);
+        setAlpha(Math.min(1.0F, baseAlpha * mediumAlpha) * fadeIn * swallowFade * Math.max(releaseFade, 0.0F));
+        quadSize = baseSize * (underwater ? 1.3F : 1.0F) * (0.55F + 0.45F * swallowFade);
     }
 
     /** 1 inside the suction cone, falling to 0 a bit outside of it. */

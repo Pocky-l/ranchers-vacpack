@@ -57,8 +57,11 @@ public final class VacuumHandler {
     private static final int HARVEST_TICKS = 6;
     private static final double SWIRL_SPEED = 0.14;
     private static final double HOLD_STIFFNESS = 0.45;
+    private static final int HOLD_SEARCH_INTERVAL = 4;
     private static final double HOLD_MAX_SPEED = 1.2;
     private static final double PULSE_CONE_DOT = Math.cos(Math.toRadians(50));
+    /** A pulse wave hitting a block closer than this pushes the player back. */
+    private static final double ROCKET_JUMP_REACH = 4.0;
 
     private VacuumHandler() {
     }
@@ -349,7 +352,13 @@ public final class VacuumHandler {
             held = null;
         }
         if (held == null) {
+            // Searching scans every living entity in range; with nothing to hold, look again only every few ticks.
+            if (state.holdSearchCooldown-- > 0) {
+                state.heldEntityId = -1;
+                return;
+            }
             held = findHoldTarget(player, stack);
+            state.holdSearchCooldown = held == null ? HOLD_SEARCH_INTERVAL : 0;
             state.heldEntityId = held == null ? -1 : held.getId();
             if (held != null) {
                 playSound(player, ModSounds.CAPTURE.get(), 0.5F, 0.6F);
@@ -552,6 +561,8 @@ public final class VacuumHandler {
             entity.hurtMarked = true;
         }
 
+        rocketJump(player, eye, look);
+
         // Rings start a couple of blocks out so they do not cover the shooter's screen.
         Vec3 nozzle = nozzlePos(player);
         for (double distance = 2.5; distance <= range; distance += 1.5) {
@@ -561,6 +572,29 @@ public final class VacuumHandler {
         }
         playSound(player, ModSounds.PULSE.get(), 0.45F, 0.95F + player.getRandom().nextFloat() * 0.1F);
         playAnimation(player, stack, VacpackItem.RECOIL_CONTROLLER, VacpackItem.PULSE_ANIM);
+    }
+
+    /**
+     * A pulse wave fired at a block close by pushes the player away from it, like a wind charge: aim down to jump,
+     * at a wall to dash. Fall damage is then measured from the push point, as for wind charges.
+     */
+    public static void rocketJump(Player player, Vec3 eye, Vec3 look) {
+        double strength = Config.pulseSelfKnockback();
+        if (strength <= 0) {
+            return;
+        }
+        Vec3 end = eye.add(look.scale(ROCKET_JUMP_REACH));
+        BlockHitResult hit = player.level().clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+        if (hit.getType() != HitResult.Type.BLOCK) {
+            return;
+        }
+        double proximity = 1.0 - hit.getLocation().distanceTo(eye) / ROCKET_JUMP_REACH;
+        Vec3 push = look.scale(-strength * (0.4 + 0.6 * proximity));
+        player.setDeltaMovement(player.getDeltaMovement().multiply(1.0, push.y > 0 ? 0.0 : 1.0, 1.0).add(push));
+        player.resetFallDistance();
+        player.currentImpulseImpactPos = hit.getLocation();
+        player.setIgnoreFallDamageFromCurrentImpulse(true);
+        player.hurtMarked = true;
     }
 
     private static boolean isPulseTarget(Entity entity) {

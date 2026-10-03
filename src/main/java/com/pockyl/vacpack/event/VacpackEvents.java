@@ -1,7 +1,6 @@
 package com.pockyl.vacpack.event;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -10,7 +9,8 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import com.pockyl.vacpack.Vacpack;
@@ -50,10 +50,13 @@ public final class VacpackEvents {
         }
 
         @SubscribeEvent
-        public static void onLivingTick(EntityTickEvent.Post event) {
-            if (event.getEntity() instanceof LivingEntity living && !living.level().isClientSide()) {
-                ShotProtection.tick(living);
-            }
+        public static void onServerTick(ServerTickEvent.Post event) {
+            ShotProtection.tick();
+        }
+
+        @SubscribeEvent
+        public static void onServerStopped(ServerStoppedEvent event) {
+            ShotProtection.clear();
         }
 
         @SubscribeEvent

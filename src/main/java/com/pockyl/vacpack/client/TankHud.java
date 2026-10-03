@@ -61,7 +61,12 @@ public final class TankHud implements LayeredDraw.Layer {
             if (slot.isEmpty()) {
                 continue;
             }
-            graphics.renderItem(icon(slot), x + 1, y + 1);
+            // Mobs are shown as small 3D models (the one that would be shot next); items and unknown mobs as icons.
+            boolean drawnAsModel = slot.holdsMobs() && MobIcons.render(graphics, slot.mobs().getLast(), x + 1, y + 1,
+                    SLOT_SIZE - 3, deltaTracker.getGameTimeDeltaPartialTick(false));
+            if (!drawnAsModel) {
+                graphics.renderItem(icon(slot), x + 1, y + 1);
+            }
             int capacity = slot.holdsMobs() ? Config.mobCapacity() : Config.itemCapacity();
             // Fill gauge along the bottom edge of the slot.
             int gaugeWidth = SLOT_SIZE - 3;

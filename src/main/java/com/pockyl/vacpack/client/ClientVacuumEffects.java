@@ -37,6 +37,7 @@ public final class ClientVacuumEffects {
     private static final IntSet VACUUMING = new IntOpenHashSet();
     private static SpriteSet wispSprites;
     private static SpriteSet dotSprites;
+    private static SpriteSet bubbleSprites;
 
     private ClientVacuumEffects() {
     }
@@ -47,6 +48,15 @@ public final class ClientVacuumEffects {
 
     public static void setDotSprites(SpriteSet sprites) {
         dotSprites = sprites;
+    }
+
+    public static void setBubbleSprites(SpriteSet sprites) {
+        bubbleSprites = sprites;
+    }
+
+    /** Bubble sprites for airflow particles under water, or null before resources are loaded. */
+    public static SpriteSet bubbleSprites() {
+        return bubbleSprites;
     }
 
     public static boolean isVacuuming(Entity player) {

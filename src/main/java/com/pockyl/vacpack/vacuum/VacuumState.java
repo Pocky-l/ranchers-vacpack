@@ -13,6 +13,8 @@ public final class VacuumState {
     BlockPos harvestPos;
     /** Entity id of the mob floating in the air stream, or -1. */
     int heldEntityId = -1;
+    /** Ticks until the next search for a mob to hold. */
+    int holdSearchCooldown;
     int harvestTicks;
     /** GeckoLib instance id of the stack whose fan animation is running, or {@link Long#MAX_VALUE}. */
     long animatedStackId = Long.MAX_VALUE;

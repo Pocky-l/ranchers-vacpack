@@ -276,6 +276,24 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void pulseAtTheFloorRocketJumps(GameTestHelper helper) {
+        Player player = player(helper);
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                helper.setBlock(x, 3, z, Blocks.STONE);
+            }
+        }
+        player.setXRot(90.0F);
+        player.setDeltaMovement(Vec3.ZERO);
+
+        VacuumHandler.pulse(player, player.getMainHandItem());
+
+        helper.assertTrue(player.getDeltaMovement().y > 0.8, "the player is launched upwards");
+        helper.assertTrue(player.isIgnoringFallDamageFromCurrentImpulse(), "the jump is protected from fall damage like a wind charge");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
     public static void vacuumPicksRipeSweetBerries(GameTestHelper helper) {
         Player player = player(helper);
         BlockPos bush = new BlockPos(3, 5, 0);
