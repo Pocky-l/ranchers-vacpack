@@ -8,8 +8,11 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import org.slf4j.Logger;
 
-import com.pockyl.vacpack.registry.ModBlocks;
+import com.pockyl.vacpack.network.ModNetwork;
+import com.pockyl.vacpack.registry.ModAttachments;
+import com.pockyl.vacpack.registry.ModDataComponents;
 import com.pockyl.vacpack.registry.ModItems;
+import com.pockyl.vacpack.registry.ModParticles;
 
 @Mod(Vacpack.MOD_ID)
 public final class Vacpack {
@@ -17,10 +20,13 @@ public final class Vacpack {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public Vacpack(IEventBus modBus, ModContainer container) {
-        ModBlocks.register(modBus);
+        ModDataComponents.register(modBus);
         ModItems.register(modBus);
+        ModParticles.register(modBus);
+        ModAttachments.register(modBus);
+        modBus.addListener(ModNetwork::register);
 
-        container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        container.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
     }
 
     public static ResourceLocation id(String path) {
