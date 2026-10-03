@@ -1,0 +1,86 @@
+package com.pockyl.vacpack.client;
+
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.LayeredDraw;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SpawnEggItem;
+
+import com.pockyl.vacpack.Config;
+import com.pockyl.vacpack.item.VacpackItem;
+import com.pockyl.vacpack.registry.ModDataComponents;
+import com.pockyl.vacpack.tank.TankSlot;
+import com.pockyl.vacpack.tank.VacTank;
+
+/** Tank slots drawn next to the hotbar while a vacpack is held. */
+public final class TankHud implements LayeredDraw.Layer {
+    private static final int SLOT_SIZE = 20;
+    private static final int GAP_TO_HOTBAR = 10;
+    private static final int SLOT_BACKGROUND = 0x90000000;
+    private static final int SLOT_BORDER = 0x60FFFFFF;
+    private static final int SELECTED_BORDER = 0xFF6FD3FF;
+    private static final int TEXT_COLOR = 0xFFFFFF;
+    private static final int FULL_COLOR = 0xFFD86F;
+
+    @Override
+    public void render(GuiGraphics graphics, DeltaTracker deltaTracker) {
+        Minecraft minecraft = Minecraft.getInstance();
+        LocalPlayer player = minecraft.player;
+        if (player == null || minecraft.options.hideGui || player.isSpectator()) {
+            return;
+        }
+        ItemStack stack = player.getMainHandItem();
+        if (!(stack.getItem() instanceof VacpackItem)) {
+            return;
+        }
+
+        VacTank tank = stack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY);
+        int slots = Config.slotCount();
+        int width = slots * SLOT_SIZE;
+        int center = graphics.guiWidth() / 2;
+        // Stay clear of the offhand slot, which sits on the side opposite to the main arm.
+        boolean rightSide = player.getMainArm() == HumanoidArm.RIGHT;
+        int x0 = rightSide ? center + 91 + GAP_TO_HOTBAR : center - 91 - GAP_TO_HOTBAR - width;
+        int y = graphics.guiHeight() - SLOT_SIZE - 1;
+        Font font = minecraft.font;
+
+        for (int i = 0; i < slots; i++) {
+            int x = x0 + i * SLOT_SIZE;
+            TankSlot slot = tank.slot(i);
+            graphics.fill(x, y, x + SLOT_SIZE - 1, y + SLOT_SIZE - 1, SLOT_BACKGROUND);
+            graphics.renderOutline(x, y, SLOT_SIZE - 1, SLOT_SIZE - 1, i == tank.selected() ? SELECTED_BORDER : SLOT_BORDER);
+            if (slot.isEmpty()) {
+                continue;
+            }
+            graphics.renderItem(icon(slot), x + 1, y + 1);
+            int capacity = slot.holdsMobs() ? Config.mobCapacity() : Config.itemCapacity();
+            String count = String.valueOf(slot.amount());
+            graphics.pose().pushPose();
+            graphics.pose().translate(0, 0, 200);
+            graphics.drawString(font, count, x + SLOT_SIZE - 1 - font.width(count), y + SLOT_SIZE - 9,
+                    slot.amount() >= capacity ? FULL_COLOR : TEXT_COLOR, true);
+            graphics.pose().popPose();
+        }
+
+        TankSlot selected = tank.selectedSlot();
+        if (!selected.isEmpty()) {
+            Component name = VacpackItem.contentName(selected);
+            int textX = rightSide ? x0 : x0 + width - font.width(name);
+            graphics.drawString(font, name, textX, y - 10, TEXT_COLOR, true);
+        }
+    }
+
+    private static ItemStack icon(TankSlot slot) {
+        if (slot.holdsItems()) {
+            return slot.item();
+        }
+        SpawnEggItem egg = slot.mobType().map(SpawnEggItem::byId).orElse(null);
+        return new ItemStack(egg != null ? egg : Items.SLIME_BALL);
+    }
+}
