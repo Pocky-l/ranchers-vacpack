@@ -554,9 +554,12 @@ public final class VacuumHandler {
             // Lift living things off the ground, otherwise ground friction eats the push at once.
             double lift = entity instanceof LivingEntity ? 0.3 + 0.12 * strength : 0.15 * strength;
             Vec3 push = direction.scale(strength).add(0, lift, 0);
-            entity.setDeltaMovement(entity.getDeltaMovement().scale(0.2).add(push));
-            entity.hasImpulse = true;
-            entity.hurtMarked = true;
+            Vec3 velocity = entity.getDeltaMovement().scale(0.2).add(push);
+            if (!ragdollify(player, entity, velocity)) {
+                entity.setDeltaMovement(velocity);
+                entity.hasImpulse = true;
+                entity.hurtMarked = true;
+            }
         }
 
         rocketJump(player, eye, look);
@@ -593,6 +596,36 @@ public final class VacuumHandler {
         player.currentImpulseImpactPos = hit.getLocation();
         player.setIgnoreFallDamageFromCurrentImpulse(true);
         player.hurtMarked = true;
+    }
+
+    /**
+     * Turns a mob or item blown away by the pulse wave into a tumbling ragdoll ({@link TankShot}) that becomes the real
+     * entity again once it settles. Players, bosses, huge, leashed, riding or ridden mobs are only pushed.
+     *
+     * @return whether the entity was turned into a ragdoll
+     */
+    private static boolean ragdollify(Player player, Entity entity, Vec3 velocity) {
+        Level level = player.level();
+        TankShot shot;
+        if (entity instanceof ItemEntity item) {
+            shot = TankShot.ofItem(level, player, item.getItem());
+        } else if (entity instanceof Mob mob && canHold(player, mob)) {
+            CompoundTag data = new CompoundTag();
+            if (!mob.save(data)) {
+                return false;
+            }
+            // The original is discarded, so the ragdoll keeps its UUID and comes back as the very same mob.
+            data.remove("Motion");
+            shot = TankShot.ofMob(level, player, data);
+        } else {
+            return false;
+        }
+        Vec3 center = center(entity);
+        shot.moveTo(center.x, center.y - shot.getBbHeight() / 2, center.z, entity.getYRot(), 0);
+        shot.setDeltaMovement(velocity);
+        entity.discard();
+        level.addFreshEntity(shot);
+        return true;
     }
 
     private static boolean isPulseTarget(Entity entity) {

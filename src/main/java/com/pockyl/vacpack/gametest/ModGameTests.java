@@ -270,8 +270,12 @@ public final class ModGameTests {
         int cooldown = VacuumHandler.shoot(player, player.getMainHandItem());
 
         helper.assertTrue(cooldown == Config.pulseCooldown(), "an empty slot fires a pulse wave");
-        helper.assertTrue(cow.getDeltaMovement().dot(player.getLookAngle()) > 0.5, "the cow is blown away");
-        cow.discard();
+        helper.assertTrue(cow.isRemoved(), "the cow turns into a ragdoll");
+        AABB area = new AABB(player.blockPosition()).inflate(8);
+        var ragdolls = helper.getLevel().getEntitiesOfClass(TankShot.class, area, TankShot::carriesMob);
+        helper.assertTrue(ragdolls.size() == 1, "exactly one ragdoll flies");
+        helper.assertTrue(ragdolls.getFirst().getDeltaMovement().dot(player.getLookAngle()) > 0.5, "the ragdoll is blown away");
+        ragdolls.forEach(TankShot::discard);
         helper.succeed();
     }
 

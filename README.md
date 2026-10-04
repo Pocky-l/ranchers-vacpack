@@ -22,7 +22,8 @@ A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs,
 - **Air stream holding** — mobs that do not fit into the tank (big slimes, cows, zombies...) float in front of the
   nozzle while you vacuum and follow your aim. Shoot to launch them, let go to drop them. Bosses cannot be held.
 - **Pulse Wave** — shooting with an empty slot releases a blast of air that knocks back mobs, items and projectiles.
-  Fire it at the ground or a wall close by to launch yourself (rocket jump), like a wind charge.
+  Mobs and items caught in it go flying as ragdolls. Fire it at the ground or a wall close by to launch yourself
+  (rocket jump), like a wind charge.
 - **Under water** the airflow turns into streams of bubbles.
 - **Harvesting** — aim at a ripe sweet berry bush or glow berry vine while vacuuming to pull the berries off.
 - **Slot selection** — `R` (rebindable) or *Sneak + Scroll*. The tank is shown next to the hotbar.
@@ -64,7 +65,8 @@ the pulse wave can be switched off separately.
 ## Credits
 
 Sound effects are built from CC0 sources: [Kenney](https://kenney.nl)'s Sci-Fi, Impact and Interface sound
-packs, and the OpenGameArt uploads "Air whoosh", "Swishes Sound Pack" and "100 CC0 SFX".
+packs, the OpenGameArt uploads "Air whoosh", "Swishes Sound Pack" and "100 CC0 SFX", and the royalty-free
+"Hair dryer, maximum speed" recording from [BigSoundBank](https://bigsoundbank.com).
 
 ## Building
 
