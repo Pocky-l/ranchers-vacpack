@@ -1,72 +1,82 @@
-# Rancher's Vacpack
+<p align="center">
+  <img src="src/main/resources/logo.png" alt="Rancher's Vacpack" width="160">
+</p>
 
-A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs, store them in a tank and shoot them back out.
+<h1 align="center">Rancher's Vacpack</h1>
 
-| | |
-|---|---|
-| Minecraft | 1.21.1 |
-| Loader | NeoForge |
-| Requires | [GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib) |
-| License | MIT |
+<p align="center">
+  A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs, carry them in a tank and shoot
+  them back out — or blast everything away with a pulse of air.
+</p>
+
+<p align="center">
+  <img alt="Minecraft 1.21.1" src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A">
+  <img alt="NeoForge" src="https://img.shields.io/badge/Loader-NeoForge-F16436">
+  <img alt="Requires GeckoLib" src="https://img.shields.io/badge/Requires-GeckoLib-4C9AFF">
+  <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue">
+</p>
 
 ## Features
 
-- **Vacuum** — hold *Use* (right click) to pull dropped items and small mobs in a cone in front of you.
-  They float, swirl along a visible air vortex and shrink into the nozzle. Movement is not slowed down while vacuuming.
-- **Tank** — 4 slots; each slot holds one kind of item (up to 64) or one kind of mob (up to 10).
-  Captured mobs keep everything: name, health, equipment.
-- **Shoot** — press *Attack* (left click) to launch one item or mob from the selected slot; hold it to fire continuously.
-  Shots behave like ragdolls: they fly, bounce off walls, floors and mobs, roll and slide, and only turn back
-  into a mob or item once they have almost stopped; mobs then get back on their feet, briefly invulnerable.
-  Items smack into mobs for a little damage and knockback, mobs land unharmed.
+- **Vacuum** — hold *Use* to suck in dropped items and small mobs. They float, swirl along a glowing air vortex and
+  shrink into the nozzle. You keep full movement speed while vacuuming.
+- **Tank** — 4 slots; each holds one kind of item (up to 64) or one kind of mob (up to 10). Captured mobs keep
+  everything: name, health, equipment, even their owner. The HUD next to the hotbar shows spinning 3D models of them.
+- **Shoot** — press *Attack* to launch one item or mob from the selected slot, hold it to fire continuously.
+  Shots are ragdolls: they fly, bounce off walls and mobs, roll, flop onto their side and get back up once they stop.
+  Items hit mobs for a little damage and knockback; mobs land unharmed.
 - **Air stream holding** — mobs that do not fit into the tank (big slimes, cows, zombies...) float in front of the
-  nozzle while you vacuum and follow your aim. Shoot to launch them, let go to drop them. Bosses cannot be held.
-- **Pulse Wave** — shooting with an empty slot releases a blast of air that knocks back mobs, items and projectiles.
-  Mobs and items caught in it go flying as ragdolls. Fire it at the ground or a wall close by to launch yourself
-  (rocket jump), like a wind charge.
-- **Under water** the airflow turns into streams of bubbles.
+  nozzle and follow your aim. Shoot to launch them, let go to drop them.
+- **Pulse Wave** — shooting with an empty slot releases a blast of air that sends mobs and items flying as ragdolls
+  and deflects projectiles. Fire it at the ground or a wall right next to you and it bursts like a wind charge:
+  rocket jumps, no fall damage, doors and buttons triggered.
 - **Harvesting** — aim at a ripe sweet berry bush or glow berry vine while vacuuming to pull the berries off.
-- **Slot selection** — `R` (rebindable) or *Sneak + Scroll*. The tank is shown next to the hotbar.
-- **Vacuumable mobs** — baby mobs of any kind (calves, piglets, baby villagers, baby zombies...), small slimes and
-  magma cubes, chickens, rabbits, pigs, cats, ocelots, foxes, wolves, parrots, frogs, tadpoles, bees, allays, axolotls,
-  squids, dolphins, fish, armadillos, bats, vexes, phantoms, cave spiders, silverfish and endermites. Big slimes,
-  leashed mobs, riders and other players' pets cannot be vacuumed.
-- Animated model: the core idles and spins up while vacuuming, the gun kicks back on shots and pulse waves, the
-  nozzle gulps and the tank bulges on every capture, and the body clacks when switching slots.
-- A glowing swirling vortex shows the airflow while vacuuming.
-- Custom sounds and particles: motor spin-up, suction rush and spin-down, capture plops and slime squelches,
-  air-cannon shots, pulse wave boom, landing thumps, slot clicks; air wisps, capture rings and shot puffs.
-- HUD with a fill gauge per slot and spinning 3D models of stored mobs.
-- Players aim the vacpack with both arms in third person.
-- Sneak + use on a block still opens chests, doors and other blocks while holding the vacpack.
+- **Vacuumable mobs** — babies of any kind, small slimes and magma cubes, chickens, rabbits, pigs, cats, ocelots,
+  foxes, wolves, parrots, frogs, tadpoles, bees, allays, axolotls, squids, dolphins, fish, armadillos, bats, vexes,
+  phantoms, cave spiders, silverfish and endermites. Bosses, leashed mobs, riders and other players' pets are safe.
+- **Feel** — animated model (spinning core, recoil, a gulp on every capture), third-person aiming pose, custom sounds
+  and particles; under water the airflow turns into bubbles.
+
+## Controls
+
+| Action | Default |
+|---|---|
+| Vacuum / hold a mob | Hold *Use* (right click) |
+| Shoot / launch held mob / pulse wave | *Attack* (left click), hold for auto-fire |
+| Next tank slot | `R` or *Sneak* + *Scroll* |
+| Use blocks (chests, doors) while holding the vacpack | *Sneak* + *Use* |
 
 ## Crafting
 
-```
-I H I      I = Iron Ingot     H = Hopper
-S B S      S = Slime Ball     B = Breeze Rod
-I R I      R = Redstone
-```
+| | | |
+|:---:|:---:|:---:|
+| Iron Ingot | Hopper | Iron Ingot |
+| Slime Ball | Breeze Rod | Slime Ball |
+| Iron Ingot | Redstone | Iron Ingot |
 
-The recipe is unlocked once you pick up a Breeze Rod.
+The recipe is unlocked as soon as you pick up a Breeze Rod. In creative mode the vacpack is in the **Pocky Mods** and
+**Tools & Utilities** tabs.
 
 ## Configuration
 
-All numbers are in the server config (`<world>/serverconfig/vacpack-server.toml`, also editable from the in-game
-mod list): range, cone angle, pull strength, capture distance, slot count, slot capacities, max mob size,
-shot speed, cooldown and damage, pulse wave range, strength and cooldown. Item and mob vacuuming, berry harvesting and
-the pulse wave can be switched off separately.
+Server config (`serverconfig/vacpack-server.toml` of the world, also editable from the in-game mod list):
 
-## Data packs
+| Section | Options |
+|---|---|
+| `vacuum` | range (14), cone angle (30°), pull strength, capture distance, vacuum items / mobs / babies, max mob size, berry harvesting, holding mobs in the air stream and the max held size |
+| `tank` | slot count (4), items per slot (64), mobs per slot (10) |
+| `shooting` | shot speed, cooldown, damage of shot items |
+| `pulseWave` | enabled, range, strength, cooldown, wind burst (rocket jump) |
 
-- `#vacpack:vacuumable` (entity types) — mobs that can be vacuumed.
-- `#vacpack:not_vacuumable` (items) — items the vacpack ignores.
+Data pack tags: `#vacpack:vacuumable` (entity types that can be vacuumed) and `#vacpack:not_vacuumable` (items that
+are ignored).
 
-## Credits
+## Installation
 
-Sound effects are built from CC0 sources: [Kenney](https://kenney.nl)'s Sci-Fi, Impact and Interface sound
-packs, the OpenGameArt uploads "Air whoosh", "Swishes Sound Pack" and "100 CC0 SFX", and the royalty-free
-"Hair dryer, maximum speed" recording from [BigSoundBank](https://bigsoundbank.com).
+1. Install [NeoForge](https://neoforged.net) for Minecraft 1.21.1.
+2. Put [GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib) and this mod into the `mods` folder.
+
+The mod is needed on both the client and the server.
 
 ## Building
 
@@ -74,8 +84,16 @@ packs, the OpenGameArt uploads "Air whoosh", "Swishes Sound Pack" and "100 CC0 S
 ./gradlew build
 ```
 
-The mod jar is written to `build/libs/`.
+The jar is written to `build/libs/`.
+
+## Credits
+
+- Author: **Pocky**.
+- Sound effects are built from royalty-free sources: [Kenney](https://kenney.nl)'s Sci-Fi, Impact and Interface packs
+  (CC0), the OpenGameArt uploads "Air whoosh", "Swishes Sound Pack" and "100 CC0 SFX" (CC0), and the
+  "Hair dryer, maximum speed" recording from [BigSoundBank](https://bigsoundbank.com).
+- Inspired by Slime Rancher. This is a fan-made mod and is not affiliated with Monomi Park.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT](LICENSE)

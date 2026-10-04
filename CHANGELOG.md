@@ -26,5 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   shots, pulse wave, landing thumps, slot clicks, harvest plucks, full-tank warning; air wisps, capture rings,
   shot puffs, pulse rings.
 - Crafting recipe with a Breeze Rod, unlocked when you pick one up.
+- Shared "Pocky Mods" creative tab (also listed under Tools & Utilities) and a mod logo.
 - Server config for range, power, capacities and shooting, plus data pack tags for vacuumable mobs and ignored items.
 - English and Russian translations.

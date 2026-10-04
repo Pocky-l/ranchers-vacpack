@@ -51,6 +51,15 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void vacpackRecipeIsLoaded(GameTestHelper helper) {
+        var recipe = helper.getLevel().getRecipeManager().byKey(Vacpack.id("vacpack"));
+        helper.assertTrue(recipe.isPresent(), "the vacpack crafting recipe is loaded");
+        helper.assertTrue(recipe.get().value().getResultItem(helper.getLevel().registryAccess()).is(ModItems.VACPACK.get()),
+                "the recipe crafts a vacpack");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
     public static void tankMergesAndOverflowsItems(GameTestHelper helper) {
         VacTank.Insertion first = VacTank.EMPTY.insertItem(new ItemStack(Items.COBBLESTONE, 15), 2, 10);
         helper.assertTrue(first.inserted() == 15, "all cobblestone fits into two slots");
