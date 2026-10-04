@@ -10,9 +10,10 @@
 </p>
 
 <p align="center">
+  <a href="https://www.curseforge.com/minecraft/mc-mods/ranchers-vacpack"><img alt="CurseForge downloads" src="https://img.shields.io/curseforge/dt/1725381?logo=curseforge&label=CurseForge&color=F16436"></a>
   <img alt="Minecraft 1.21.1" src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A">
-  <img alt="NeoForge" src="https://img.shields.io/badge/Loader-NeoForge-F16436">
-  <img alt="Requires GeckoLib" src="https://img.shields.io/badge/Requires-GeckoLib-4C9AFF">
+  <a href="https://neoforged.net"><img alt="NeoForge" src="https://img.shields.io/badge/Loader-NeoForge-F16436"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/geckolib"><img alt="Requires GeckoLib" src="https://img.shields.io/badge/Requires-GeckoLib-4C9AFF"></a>
   <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue">
 </p>
 
@@ -93,6 +94,22 @@ The jar is written to `build/libs/`.
   (CC0), the OpenGameArt uploads "Air whoosh", "Swishes Sound Pack" and "100 CC0 SFX" (CC0), and the
   "Hair dryer, maximum speed" recording from [BigSoundBank](https://bigsoundbank.com).
 - Inspired by Slime Rancher. This is a fan-made mod and is not affiliated with Monomi Park.
+
+<!-- more-mods:start -->
+## More mods by Pocky
+
+<table>
+  <tr>
+    <td align="center" width="112"><a href="https://www.curseforge.com/minecraft/mc-mods/holy-staff"><img src="https://raw.githubusercontent.com/Pocky-l/holy-staff/main/docs/icon.png" width="96" alt="Holy Staff"></a></td>
+    <td>
+      <a href="https://www.curseforge.com/minecraft/mc-mods/holy-staff"><b>Holy Staff</b></a><br>
+      A holy staff with three healing skills, aim previews and flying heal numbers.<br>
+      <a href="https://www.curseforge.com/minecraft/mc-mods/holy-staff"><img alt="CurseForge" src="https://img.shields.io/curseforge/dt/1725465?logo=curseforge&label=CurseForge&color=F16436"></a>
+      <a href="https://github.com/Pocky-l/holy-staff"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-source-181717?logo=github"></a>
+    </td>
+  </tr>
+</table>
+<!-- more-mods:end -->
 
 ## License
 
