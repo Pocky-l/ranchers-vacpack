@@ -42,5 +42,6 @@
   "subtitles.vacpack.vacuum_stop": "Vacpack winds down",
   "subtitles.vacpack.land": "Something lands",
   "vacpack.configuration.vacuum_babies": "Vacuum Baby Mobs",
-  "vacpack.configuration.pulse_wind_burst": "Wind Burst (Rocket Jump)"
+  "vacpack.configuration.pulse_wind_burst": "Wind Burst (Rocket Jump)",
+  "itemGroup.pockymods.pocky_mods": "Pocky Mods"
 }

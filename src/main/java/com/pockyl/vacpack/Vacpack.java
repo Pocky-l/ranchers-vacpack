@@ -6,6 +6,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 
 import com.pockyl.vacpack.network.ModNetwork;
@@ -14,6 +15,7 @@ import com.pockyl.vacpack.registry.ModDataComponents;
 import com.pockyl.vacpack.registry.ModEntities;
 import com.pockyl.vacpack.registry.ModItems;
 import com.pockyl.vacpack.registry.ModParticles;
+import com.pockyl.vacpack.registry.PockyModsTab;
 import com.pockyl.vacpack.registry.ModSounds;
 
 @Mod(Vacpack.MOD_ID)
@@ -29,6 +31,7 @@ public final class Vacpack {
         ModSounds.register(modBus);
         ModAttachments.register(modBus);
         modBus.addListener(ModNetwork::register);
+        PockyModsTab.register(modBus, () -> new ItemStack(ModItems.VACPACK.get()), output -> output.accept(ModItems.VACPACK));
 
         container.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
     }
