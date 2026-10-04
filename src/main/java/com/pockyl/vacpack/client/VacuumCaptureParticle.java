@@ -63,7 +63,9 @@ public final class VacuumCaptureParticle extends Particle {
         pose.translate(pos.x - cameraPos.x, pos.y - cameraPos.y, pos.z - cameraPos.z);
         pose.scale(scale, scale, scale);
         pose.mulPose(Axis.YP.rotationDegrees(progress * 360.0F));
+        dispatcher.setRenderShadow(false);
         dispatcher.render(entity, 0, 0, 0, entity.getYRot(), partialTick, pose, buffers, dispatcher.getPackedLightCoords(entity, partialTick));
+        dispatcher.setRenderShadow(true);
         buffers.endBatch();
     }
 

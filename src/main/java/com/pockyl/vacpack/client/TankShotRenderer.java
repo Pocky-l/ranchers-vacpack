@@ -37,7 +37,10 @@ public final class TankShotRenderer extends EntityRenderer<TankShot> {
             pose.mulPose(Axis.YP.rotationDegrees(-entityYaw));
             pose.mulPose(shot.getOrientation(partialTick));
             pose.translate(0, -half, 0);
+            // Ragdolls cast no shadow: the nested render would otherwise draw the mob's own one.
+            entityRenderDispatcher.setRenderShadow(false);
             entityRenderDispatcher.render(mob, 0, 0, 0, 0, partialTick, pose, buffers, light);
+            entityRenderDispatcher.setRenderShadow(true);
         } else if (!shot.getItem().isEmpty()) {
             pose.mulPose(Axis.YP.rotationDegrees(-entityYaw));
             pose.mulPose(shot.getOrientation(partialTick));
