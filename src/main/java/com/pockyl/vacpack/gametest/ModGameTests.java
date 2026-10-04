@@ -5,6 +5,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -280,8 +281,13 @@ public final class ModGameTests {
     }
 
     @GameTest(template = "empty")
-    public static void pulseAtTheFloorRocketJumps(GameTestHelper helper) {
-        Player player = player(helper);
+    @SuppressWarnings("removal")
+    public static void pulseAtTheFloorBurstsLikeAWindCharge(GameTestHelper helper) {
+        // The explosion only affects entities that are in the level, so this test needs a real (mock) server player.
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        Vec3 pos = helper.absoluteVec(new Vec3(0.5, 4.0, 0.5));
+        player.moveTo(pos.x, pos.y, pos.z, -90.0F, 0.0F);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.VACPACK.get()));
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
                 helper.setBlock(x, 3, z, Blocks.STONE);
@@ -290,10 +296,12 @@ public final class ModGameTests {
         player.setXRot(90.0F);
         player.setDeltaMovement(Vec3.ZERO);
 
-        VacuumHandler.pulse(player, player.getMainHandItem());
+        // Burst only: the full pulse also triggers a GeckoLib animation packet, which the mock connection cannot send.
+        VacuumHandler.windBurst(player, player.getEyePosition(), player.getLookAngle());
 
-        helper.assertTrue(player.getDeltaMovement().y > 0.8, "the player is launched upwards");
-        helper.assertTrue(player.isIgnoringFallDamageFromCurrentImpulse(), "the jump is protected from fall damage like a wind charge");
+        helper.assertTrue(player.getDeltaMovement().y > 0.3, "the wind burst launches the player upwards");
+        helper.assertTrue(player.isIgnoringFallDamageFromCurrentImpulse(), "like a wind charge, the jump protects from fall damage");
+        player.discard();
         helper.succeed();
     }
 

@@ -42,5 +42,5 @@
   "subtitles.vacpack.vacuum_stop": "Вакпак затихает",
   "subtitles.vacpack.land": "Что-то приземляется",
   "vacpack.configuration.vacuum_babies": "Всасывать детёнышей",
-  "vacpack.configuration.pulse_self_knockback": "Отдача по себе (рокетджамп)"
+  "vacpack.configuration.pulse_wind_burst": "Порыв ветра (рокетджамп)"
 }

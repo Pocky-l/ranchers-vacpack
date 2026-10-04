@@ -1,6 +1,7 @@
 package com.pockyl.vacpack.vacuum;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -9,8 +10,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
@@ -21,9 +24,12 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.windcharge.WindCharge;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.SimpleExplosionDamageCalculator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -46,6 +52,8 @@ import com.pockyl.vacpack.registry.ModTags;
 import com.pockyl.vacpack.tank.VacTank;
 
 import java.util.Comparator;
+import java.util.Optional;
+import java.util.function.Function;
 
 /** Server-side vacpack behavior: suction, capture, holding, shooting, pulse wave and harvesting. */
 public final class VacuumHandler {
@@ -60,8 +68,13 @@ public final class VacuumHandler {
     private static final int HOLD_SEARCH_INTERVAL = 4;
     private static final double HOLD_MAX_SPEED = 1.2;
     private static final double PULSE_CONE_DOT = Math.cos(Math.toRadians(50));
-    /** A pulse wave hitting a block closer than this pushes the player back. */
-    private static final double ROCKET_JUMP_REACH = 4.0;
+    /** A pulse wave hitting a block closer than this bursts like a wind charge. */
+    private static final double WIND_BURST_REACH = 4.0;
+    private static final float WIND_BURST_RADIUS = 1.2F;
+    /** Same settings as the vanilla wind charge explosion. */
+    private static final ExplosionDamageCalculator WIND_BURST_DAMAGE = new SimpleExplosionDamageCalculator(
+            true, false, Optional.of(1.22F),
+            BuiltInRegistries.BLOCK.getTag(BlockTags.BLOCKS_WIND_CHARGE_EXPLOSIONS).map(Function.identity()));
 
     private VacuumHandler() {
     }
@@ -562,7 +575,7 @@ public final class VacuumHandler {
             }
         }
 
-        rocketJump(player, eye, look);
+        windBurst(player, eye, look);
 
         // Rings start a couple of blocks out so they do not cover the shooter's screen.
         Vec3 nozzle = nozzlePos(player);
@@ -576,26 +589,26 @@ public final class VacuumHandler {
     }
 
     /**
-     * A pulse wave fired at a block close by pushes the player away from it, like a wind charge: aim down to jump,
-     * at a wall to dash. Fall damage is then measured from the push point, as for wind charges.
+     * A pulse wave hitting a block close by bursts exactly like a vanilla wind charge hitting it: same explosion
+     * (radius 1.2, no damage, 1.22 knockback, triggers doors/buttons/levers, wind-charge-proof blocks respected), so
+     * shooting at your feet or a wall rocket-jumps you, with the wind charge's fall damage protection. A wind charge
+     * owned by the player, never added to the world, is used as the explosion source for that.
      */
-    public static void rocketJump(Player player, Vec3 eye, Vec3 look) {
-        double strength = Config.pulseSelfKnockback();
-        if (strength <= 0) {
+    public static void windBurst(Player player, Vec3 eye, Vec3 look) {
+        if (!Config.pulseWindBurst() || !(player.level() instanceof ServerLevel level)) {
             return;
         }
-        Vec3 end = eye.add(look.scale(ROCKET_JUMP_REACH));
-        BlockHitResult hit = player.level().clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+        Vec3 end = eye.add(look.scale(WIND_BURST_REACH));
+        BlockHitResult hit = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
         if (hit.getType() != HitResult.Type.BLOCK) {
             return;
         }
-        double proximity = 1.0 - hit.getLocation().distanceTo(eye) / ROCKET_JUMP_REACH;
-        Vec3 push = look.scale(-strength * (0.4 + 0.6 * proximity));
-        player.setDeltaMovement(player.getDeltaMovement().multiply(1.0, push.y > 0 ? 0.0 : 1.0, 1.0).add(push));
-        player.resetFallDistance();
-        player.currentImpulseImpactPos = hit.getLocation();
-        player.setIgnoreFallDamageFromCurrentImpulse(true);
-        player.hurtMarked = true;
+        WindCharge source = new WindCharge(EntityType.WIND_CHARGE, level);
+        source.setOwner(player);
+        Vec3 at = hit.getLocation();
+        level.explode(source, null, WIND_BURST_DAMAGE, at.x, at.y, at.z, WIND_BURST_RADIUS, false,
+                Level.ExplosionInteraction.TRIGGER, ParticleTypes.GUST_EMITTER_SMALL, ParticleTypes.GUST_EMITTER_LARGE,
+                SoundEvents.WIND_CHARGE_BURST);
     }
 
     /**
