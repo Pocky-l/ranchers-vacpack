@@ -4,6 +4,10 @@ A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs,
 
 **Requires [NeoForge](https://neoforged.net) 1.21.1 and [GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib).** Needed on both client and server.
 
+![A horse too big for the tank floats in the air stream](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/screenshots/air-stream.jpg)
+
+*A horse too big for the tank floats in the air stream*
+
 ## Features
 
 * **Vacuum** — hold *Use* to suck in dropped items and small mobs. They swirl along a glowing air vortex and shrink into the nozzle. You keep full movement speed while vacuuming.
