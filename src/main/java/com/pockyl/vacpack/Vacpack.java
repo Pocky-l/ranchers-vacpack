@@ -31,7 +31,10 @@ public final class Vacpack {
         ModSounds.register(modBus);
         ModAttachments.register(modBus);
         modBus.addListener(ModNetwork::register);
-        PockyModsTab.register(modBus, () -> new ItemStack(ModItems.VACPACK.get()), output -> output.accept(ModItems.VACPACK));
+        PockyModsTab.register(modBus, () -> new ItemStack(ModItems.VACPACK.get()), output -> {
+            output.accept(ModItems.VACPACK);
+            output.accept(ModItems.CREATIVE_VACPACK);
+        });
 
         container.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
     }

@@ -35,6 +35,8 @@
 - **Vacuumable mobs** — babies of any kind, small slimes and magma cubes, chickens, rabbits, pigs, cats, ocelots,
   foxes, wolves, parrots, frogs, tadpoles, bees, allays, axolotls, squids, dolphins, fish, armadillos, bats, vexes,
   phantoms, cave spiders, silverfish and endermites. Bosses, leashed mobs, riders and other players' pets are safe.
+- **Creative Vacpack** — a pink vacpack for creative mode: bottomless tank slots, no delay between shots and it
+  vacuums any mob, big or small (except bosses). Not craftable; find it in the creative tabs.
 - **Feel** — animated model (spinning core, recoil, a gulp on every capture), third-person aiming pose, custom sounds
   and particles; under water the airflow turns into bubbles.
 
@@ -55,8 +57,8 @@
 | Slime Ball | Breeze Rod | Slime Ball |
 | Iron Ingot | Redstone | Iron Ingot |
 
-The recipe is unlocked as soon as you pick up a Breeze Rod. In creative mode the vacpack is in the **Pocky Mods** and
-**Tools & Utilities** tabs.
+The recipe is unlocked as soon as you pick up a Breeze Rod. In creative mode the vacpack and the Creative Vacpack are in
+the **Pocky Mods** and **Tools & Utilities** tabs.
 
 ## Configuration
 

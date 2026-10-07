@@ -357,12 +357,58 @@ public final class ModGameTests {
         helper.getLevel().getEntitiesOfClass(ItemEntity.class, area, e -> true).forEach(ItemEntity::discard);
         helper.succeed();
     }
+    @GameTest(template = "empty")
+    public static void creativeVacpackTakesBigMobsAndBottomlessStacks(GameTestHelper helper) {
+        Player player = player(helper, new ItemStack(ModItems.CREATIVE_VACPACK.get()));
+        ItemStack vacpack = player.getMainHandItem();
+        Vec3 nozzle = VacuumHandler.nozzlePos(player);
+        Cow adult = EntityType.COW.create(helper.getLevel());
+        adult.moveTo(nozzle.x, nozzle.y - adult.getBbHeight() / 2, nozzle.z, 0, 0);
+        adult.setNoAi(true);
+        helper.getLevel().addFreshEntity(adult);
+        Slime big = spawnSlime(helper, nozzle, 4);
+        ItemEntity item = new ItemEntity(helper.getLevel(), nozzle.x, nozzle.y, nozzle.z, new ItemStack(Items.SLIME_BALL, 64));
+        item.getItem().setCount(300);
+        helper.getLevel().addFreshEntity(item);
+
+        VacuumHandler.vacuumTick(player, vacpack);
+
+        VacTank tank = vacpack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY);
+        helper.assertTrue(adult.isRemoved(), "the creative vacpack takes an adult cow");
+        helper.assertTrue(big.isRemoved(), "the creative vacpack takes a big slime");
+        helper.assertTrue(item.isRemoved() && tank.slot(0).count() == 300, "300 slime balls fit into one creative slot");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void creativeVacpackShootsEveryTick(GameTestHelper helper) {
+        int regular = shotsInTwoTicks(helper, new ItemStack(ModItems.VACPACK.get()));
+        int creative = shotsInTwoTicks(helper, new ItemStack(ModItems.CREATIVE_VACPACK.get()));
+        helper.assertTrue(regular == 1, "the regular vacpack waits between shots, fired " + regular);
+        helper.assertTrue(creative == 2, "the creative vacpack fires every tick, fired " + creative);
+        helper.succeed();
+    }
+
+    private static int shotsInTwoTicks(GameTestHelper helper, ItemStack vacpack) {
+        vacpack.set(ModDataComponents.TANK, VacTank.EMPTY.insertItem(new ItemStack(Items.SNOWBALL, 5), 4, 64).tank());
+        Player player = player(helper, vacpack);
+        VacuumHandler.setInput(player, false, true);
+        VacuumHandler.tick(player);
+        VacuumHandler.tick(player);
+        int left = player.getMainHandItem().getOrDefault(ModDataComponents.TANK, VacTank.EMPTY).slot(0).count();
+        helper.getLevel().getEntitiesOfClass(TankShot.class, new AABB(player.blockPosition()).inflate(8)).forEach(TankShot::discard);
+        return 5 - left;
+    }
 
     private static Player player(GameTestHelper helper) {
+        return player(helper, new ItemStack(ModItems.VACPACK.get()));
+    }
+
+    private static Player player(GameTestHelper helper, ItemStack vacpack) {
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         Vec3 pos = helper.absoluteVec(new Vec3(0.5, 4.0, 0.5));
         player.moveTo(pos.x, pos.y, pos.z, -90.0F, 0.0F);
-        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.VACPACK.get()));
+        player.setItemInHand(InteractionHand.MAIN_HAND, vacpack);
         return player;
     }
 

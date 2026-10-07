@@ -2,6 +2,8 @@ package com.pockyl.vacpack.vacuum;
 
 import net.minecraft.core.BlockPos;
 
+import com.pockyl.vacpack.item.VacpackItem;
+
 /** Server-side input and timers of one player. Not persisted. */
 public final class VacuumState {
     boolean vacuuming;
@@ -18,6 +20,8 @@ public final class VacuumState {
     int harvestTicks;
     /** GeckoLib instance id of the stack whose fan animation is running, or {@link Long#MAX_VALUE}. */
     long animatedStackId = Long.MAX_VALUE;
+    /** The vacpack (regular or creative) whose fan animation is running; GeckoLib keeps animations per item. */
+    VacpackItem animatedItem;
 
     public boolean isVacuuming() {
         return vacuuming;

@@ -45,7 +45,6 @@ import com.pockyl.vacpack.network.CapturePayload;
 import com.pockyl.vacpack.network.VacuumStatePayload;
 import com.pockyl.vacpack.registry.ModAttachments;
 import com.pockyl.vacpack.registry.ModDataComponents;
-import com.pockyl.vacpack.registry.ModItems;
 import com.pockyl.vacpack.registry.ModParticles;
 import com.pockyl.vacpack.registry.ModSounds;
 import com.pockyl.vacpack.registry.ModTags;
@@ -61,6 +60,8 @@ public final class VacuumHandler {
     public static final int SHOT_IMMUNITY_TICKS = 20;
     private static final int EMPTY_SHOT_COOLDOWN = 10;
     private static final int HELD_SHOT_COOLDOWN = 10;
+    /** The Creative Vacpack fires every tick while the button is held. */
+    private static final int CREATIVE_SHOT_COOLDOWN = 1;
     private static final int FULL_WARNING_INTERVAL = 20;
     private static final int HARVEST_TICKS = 6;
     private static final double SWIRL_SPEED = 0.14;
@@ -141,7 +142,8 @@ public final class VacuumHandler {
             harvestTick(player, state);
         }
         if (state.shooting && state.shootCooldown == 0) {
-            state.shootCooldown = shoot(player, stack);
+            int cooldown = shoot(player, stack);
+            state.shootCooldown = VacpackItem.isCreative(stack) ? Math.min(cooldown, CREATIVE_SHOT_COOLDOWN) : cooldown;
         }
     }
 
@@ -180,6 +182,8 @@ public final class VacuumHandler {
         double minDot = Math.cos(Math.toRadians(Config.coneAngle()));
         double capture = Config.captureDistance();
         int slotCount = Config.slotCount();
+        int itemCapacity = VacpackItem.itemCapacity(stack);
+        int mobCapacity = VacpackItem.mobCapacity(stack);
         AABB area = player.getBoundingBox().inflate(range);
         VacTank tank = tank(stack);
         VacTank initial = tank;
@@ -187,7 +191,7 @@ public final class VacuumHandler {
 
         if (Config.vacuumItems()) {
             for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, area, e -> canVacuumItem(e) && inCone(player, e, range, minDot))) {
-                if (tank.slotForItem(item.getItem(), slotCount, Config.itemCapacity()) < 0) {
+                if (tank.slotForItem(item.getItem(), slotCount, itemCapacity) < 0) {
                     blocked = true;
                     continue;
                 }
@@ -195,7 +199,7 @@ public final class VacuumHandler {
                     pull(item, nozzle, axis, range);
                     continue;
                 }
-                VacTank.Insertion insertion = tank.insertItem(item.getItem(), slotCount, Config.itemCapacity());
+                VacTank.Insertion insertion = tank.insertItem(item.getItem(), slotCount, itemCapacity);
                 tank = insertion.tank();
                 ItemStack remaining = item.getItem().copy();
                 remaining.shrink(insertion.inserted());
@@ -211,8 +215,8 @@ public final class VacuumHandler {
         }
 
         if (Config.vacuumMobs()) {
-            for (Mob mob : level.getEntitiesOfClass(Mob.class, area, e -> canVacuumMob(player, e) && inCone(player, e, range, minDot))) {
-                if (tank.slotForMob(mob.getType(), slotCount, Config.mobCapacity()) < 0) {
+            for (Mob mob : level.getEntitiesOfClass(Mob.class, area, e -> canVacuumMob(player, stack, e) && inCone(player, e, range, minDot))) {
+                if (tank.slotForMob(mob.getType(), slotCount, mobCapacity) < 0) {
                     blocked = true;
                     continue;
                 }
@@ -221,7 +225,7 @@ public final class VacuumHandler {
                     tumble(mob, 9.0F);
                     continue;
                 }
-                VacTank updated = capture(player, tank, mob, slotCount);
+                VacTank updated = capture(player, tank, mob, slotCount, mobCapacity);
                 if (updated != null) {
                     tank = updated;
                     captureEffects(player, stack, nozzle, mob instanceof Slime);
@@ -235,12 +239,12 @@ public final class VacuumHandler {
         return blocked;
     }
 
-    private static VacTank capture(Player player, VacTank tank, Mob mob, int slotCount) {
+    private static VacTank capture(Player player, VacTank tank, Mob mob, int slotCount, int mobCapacity) {
         CompoundTag data = saveMob(mob);
         if (data == null) {
             return null;
         }
-        VacTank updated = tank.insertMob(mob.getType(), data, slotCount, Config.mobCapacity());
+        VacTank updated = tank.insertMob(mob.getType(), data, slotCount, mobCapacity);
         if (updated != null) {
             animateCapture(player, mob);
             mob.discard();
@@ -280,13 +284,18 @@ public final class VacuumHandler {
         return item.isAlive() && !item.hasPickUpDelay() && !item.getItem().is(ModTags.NOT_VACUUMABLE);
     }
 
-    public static boolean canVacuumMob(Player player, Mob mob) {
-        double maxSize = Config.maxMobSize();
-        return mob.isAlive()
-                && (mob.getType().is(ModTags.VACUUMABLE) || mob.isBaby() && Config.vacuumBabies())
-                && mob.getBbWidth() <= maxSize && mob.getBbHeight() <= maxSize
+    /** Whether the mob can go into the tank of {@code stack}; the Creative Vacpack takes any mob except bosses. */
+    public static boolean canVacuumMob(Player player, ItemStack stack, Mob mob) {
+        boolean eligible = VacpackItem.isCreative(stack) ? !mob.getType().is(Tags.EntityTypes.BOSSES) : fitsRegularTank(mob);
+        return mob.isAlive() && eligible
                 && isFree(player, mob)
                 && !recentlyShot(mob);
+    }
+
+    private static boolean fitsRegularTank(Mob mob) {
+        double maxSize = Config.maxMobSize();
+        return (mob.getType().is(ModTags.VACUUMABLE) || mob.isBaby() && Config.vacuumBabies())
+                && mob.getBbWidth() <= maxSize && mob.getBbHeight() <= maxSize;
     }
 
     /** Not tied to anything: no leash, no rider or vehicle, not someone else's pet. */
@@ -404,8 +413,8 @@ public final class VacuumHandler {
         int slotCount = Config.slotCount();
         return player.level().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(range),
                         e -> canHold(player, e) && inCone(player, e, range, minDot)
-                                && !(e instanceof Mob mob && canVacuumMob(player, mob)
-                                && tank.slotForMob(mob.getType(), slotCount, Config.mobCapacity()) >= 0))
+                                && !(e instanceof Mob mob && canVacuumMob(player, stack, mob)
+                                && tank.slotForMob(mob.getType(), slotCount, VacpackItem.mobCapacity(stack)) >= 0))
                 .stream()
                 .min(Comparator.comparingDouble(player::distanceToSqr))
                 .orElse(null);
@@ -690,14 +699,16 @@ public final class VacuumHandler {
     private static void startFanAnimation(Player player, ItemStack stack, VacuumState state) {
         if (player.level() instanceof ServerLevel level && stack.getItem() instanceof VacpackItem vacpack) {
             state.animatedStackId = GeoItem.getOrAssignId(stack, level);
+            state.animatedItem = vacpack;
             vacpack.triggerAnim(player, state.animatedStackId, VacpackItem.FAN_CONTROLLER, VacpackItem.VACUUM_ANIM);
         }
     }
 
     private static void stopFanAnimation(Player player, VacuumState state) {
-        if (state.animatedStackId != Long.MAX_VALUE && !player.level().isClientSide()) {
-            ModItems.VACPACK.get().stopTriggeredAnim(player, state.animatedStackId, VacpackItem.FAN_CONTROLLER, VacpackItem.VACUUM_ANIM);
+        if (state.animatedItem != null && !player.level().isClientSide()) {
+            state.animatedItem.stopTriggeredAnim(player, state.animatedStackId, VacpackItem.FAN_CONTROLLER, VacpackItem.VACUUM_ANIM);
             state.animatedStackId = Long.MAX_VALUE;
+            state.animatedItem = null;
         }
     }
 

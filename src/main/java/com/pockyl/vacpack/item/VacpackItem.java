@@ -48,12 +48,33 @@ public final class VacpackItem extends Item implements GeoItem {
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("idle");
 
     private static final int BAR_COLOR = 0x6FD3FF;
+    /** Slot capacity of the Creative Vacpack: effectively unlimited, but far from integer overflow. */
+    private static final int CREATIVE_CAPACITY = 1_000_000;
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final boolean creative;
 
-    public VacpackItem(Properties properties) {
+    public VacpackItem(Properties properties, boolean creative) {
         super(properties);
+        this.creative = creative;
         GeoItem.registerSyncedAnimatable(this);
+    }
+
+    public boolean isCreative() {
+        return creative;
+    }
+
+    /** Whether the stack is a Creative Vacpack: no slot limits, no shot cooldown, takes any non-boss mob. */
+    public static boolean isCreative(ItemStack stack) {
+        return stack.getItem() instanceof VacpackItem vacpack && vacpack.creative;
+    }
+
+    public static int itemCapacity(ItemStack stack) {
+        return isCreative(stack) ? CREATIVE_CAPACITY : Config.itemCapacity();
+    }
+
+    public static int mobCapacity(ItemStack stack) {
+        return isCreative(stack) ? CREATIVE_CAPACITY : Config.mobCapacity();
     }
 
     @Override
@@ -74,7 +95,7 @@ public final class VacpackItem extends Item implements GeoItem {
 
     @Override
     public boolean isBarVisible(ItemStack stack) {
-        return !tank(stack).isEmpty();
+        return !creative && !tank(stack).isEmpty();
     }
 
     @Override
@@ -84,7 +105,7 @@ public final class VacpackItem extends Item implements GeoItem {
         float fill = 0;
         for (int i = 0; i < slots; i++) {
             TankSlot slot = tank.slot(i);
-            int capacity = slot.holdsMobs() ? Config.mobCapacity() : Config.itemCapacity();
+            int capacity = slot.holdsMobs() ? mobCapacity(stack) : itemCapacity(stack);
             fill += Math.min(1.0F, (float) slot.amount() / capacity);
         }
         return Mth.clamp(Math.round(13.0F * fill / slots), 1, 13);
@@ -98,6 +119,9 @@ public final class VacpackItem extends Item implements GeoItem {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         VacTank tank = tank(stack);
+        if (creative) {
+            tooltip.add(Component.translatable("tooltip.vacpack.creative").withStyle(ChatFormatting.LIGHT_PURPLE));
+        }
         if (tank.isEmpty()) {
             tooltip.add(Component.translatable("tooltip.vacpack.empty").withStyle(ChatFormatting.GRAY));
         } else {
@@ -150,7 +174,7 @@ public final class VacpackItem extends Item implements GeoItem {
             @Override
             public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
                 if (renderer == null) {
-                    renderer = new VacpackRenderer();
+                    renderer = new VacpackRenderer(creative);
                 }
                 return renderer;
             }

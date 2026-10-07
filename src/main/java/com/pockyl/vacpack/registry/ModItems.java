@@ -16,7 +16,13 @@ public final class ModItems {
     public static final DeferredItem<VacpackItem> VACPACK = ITEMS.registerItem("vacpack", properties -> new VacpackItem(properties
             .stacksTo(1)
             .rarity(Rarity.UNCOMMON)
-            .component(ModDataComponents.TANK.get(), VacTank.EMPTY)));
+            .component(ModDataComponents.TANK.get(), VacTank.EMPTY), false));
+
+    /** Creative only: not craftable, unlimited slots, no shot cooldown, takes any mob except bosses. */
+    public static final DeferredItem<VacpackItem> CREATIVE_VACPACK = ITEMS.registerItem("creative_vacpack", properties -> new VacpackItem(properties
+            .stacksTo(1)
+            .rarity(Rarity.EPIC)
+            .component(ModDataComponents.TANK.get(), VacTank.EMPTY), true));
 
     private ModItems() {
     }

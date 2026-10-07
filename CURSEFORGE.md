@@ -16,6 +16,7 @@ A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs,
 * **Air stream holding** — mobs too big for the tank (big slimes, cows, zombies...) float in front of the nozzle and follow your aim. Shoot to launch them, let go to drop them.
 * **Pulse Wave** — shooting with an empty slot releases a blast of air that sends mobs and items flying and deflects projectiles. Fire it at the ground right next to you for a rocket jump, wind charge style.
 * **Harvesting** — vacuum ripe sweet berry bushes and glow berry vines to pull the berries off.
+* **Creative Vacpack** — a pink vacpack for creative mode: bottomless tank slots, no delay between shots and it vacuums any mob, big or small (except bosses). Not craftable; find it in the creative tabs.
 * **Feel** — animated model, third-person aiming pose, custom sounds and particles; under water the airflow turns into bubbles.
 
 ## Vacuumable mobs

@@ -4,6 +4,12 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - Unreleased
+### Added
+- Creative Vacpack: a pink vacpack for creative mode with bottomless tank slots and no delay between shots that
+  vacuums any mob, big or small, except bosses. It is not craftable and sits in the Pocky Mods and Tools & Utilities
+  creative tabs.
+
 ## [1.0.0] - 2026-10-04
 ### Added
 - The Vacpack: hold right click to vacuum up dropped items and small mobs, left click to shoot them back out.

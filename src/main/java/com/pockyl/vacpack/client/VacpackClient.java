@@ -63,7 +63,7 @@ public final class VacpackClient {
             public HumanoidModel.ArmPose getArmPose(LivingEntity entity, InteractionHand hand, ItemStack stack) {
                 return HumanoidModel.ArmPose.CROSSBOW_HOLD;
             }
-        }, ModItems.VACPACK.get());
+        }, ModItems.VACPACK.get(), ModItems.CREATIVE_VACPACK.get());
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {

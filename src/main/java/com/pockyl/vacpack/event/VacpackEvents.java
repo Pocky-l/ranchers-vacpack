@@ -76,6 +76,7 @@ public final class VacpackEvents {
         public static void onBuildCreativeTabs(BuildCreativeModeTabContentsEvent event) {
             if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
                 event.accept(ModItems.VACPACK);
+                event.accept(ModItems.CREATIVE_VACPACK);
             }
         }
     }
