@@ -17,6 +17,12 @@
   <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue">
 </p>
 
+## Video
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=977JtGoXSZg"><img src="https://img.youtube.com/vi/977JtGoXSZg/maxresdefault.jpg" alt="Rancher's Vacpack showcase video" width="640"></a>
+</p>
+
 ## Features
 
 - **Vacuum** — hold *Use* to suck in dropped items and small mobs. They float, swirl along a glowing air vortex and

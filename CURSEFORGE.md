@@ -4,6 +4,12 @@ A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs,
 
 **Requires [NeoForge](https://neoforged.net) 1.21.1 and [GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib).** Needed on both client and server.
 
+## Video showcase
+
+[![Rancher's Vacpack showcase video](https://img.youtube.com/vi/977JtGoXSZg/maxresdefault.jpg)](https://www.youtube.com/watch?v=977JtGoXSZg)
+
+*Watch the showcase on [YouTube](https://www.youtube.com/watch?v=977JtGoXSZg)*
+
 ![A horse too big for the tank floats in the air stream](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/screenshots/air-stream.jpg)
 
 *A horse too big for the tank floats in the air stream*
