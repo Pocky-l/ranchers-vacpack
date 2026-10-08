@@ -1,7 +1,7 @@
 package com.pockyl.vacpack;
 
 import com.mojang.logging.LogUtils;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -9,6 +9,7 @@ import net.neoforged.fml.config.ModConfig;
 import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 
+import com.pockyl.vacpack.gametest.ModGameTests;
 import com.pockyl.vacpack.network.ModNetwork;
 import com.pockyl.vacpack.registry.ModAttachments;
 import com.pockyl.vacpack.registry.ModDataComponents;
@@ -31,6 +32,7 @@ public final class Vacpack {
         ModSounds.register(modBus);
         ModAttachments.register(modBus);
         modBus.addListener(ModNetwork::register);
+        ModGameTests.register(modBus);
         PockyModsTab.register(modBus, () -> new ItemStack(ModItems.VACPACK.get()), output -> {
             output.accept(ModItems.VACPACK);
             output.accept(ModItems.CREATIVE_VACPACK);
@@ -39,7 +41,7 @@ public final class Vacpack {
         container.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
     }
 
-    public static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    public static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
 }
