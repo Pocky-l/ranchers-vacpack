@@ -20,8 +20,13 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SweetBerryBushBlock;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.VanillaGameEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -34,6 +39,8 @@ import com.pockyl.vacpack.registry.ModItems;
 import com.pockyl.vacpack.tank.VacTank;
 import com.pockyl.vacpack.vacuum.VacuumHandler;
 import com.pockyl.vacpack.vacuum.VacuumState;
+
+import java.util.function.Consumer;
 
 /**
  * In-game tests, run headless by {@code gradlew runGameTestServer}.
@@ -320,15 +327,28 @@ public final class ModGameTests {
         BlockPos bush = new BlockPos(3, 5, 0);
         helper.setBlock(bush, Blocks.SWEET_BERRY_BUSH.defaultBlockState().setValue(SweetBerryBushBlock.AGE, 3));
         VacuumState state = new VacuumState();
-
-        for (int i = 0; i < 10; i++) {
-            VacuumHandler.harvestTick(player, state);
+        BlockPos absolute = helper.absolutePos(bush);
+        boolean[] heard = new boolean[2];
+        Consumer<BlockEvent.NeighborNotifyEvent> neighbours = event -> heard[0] |= event.getPos().equals(absolute);
+        Consumer<VanillaGameEvent> gameEvents = event -> heard[1] |= event.getVanillaEvent().is(GameEvent.BLOCK_CHANGE)
+                && BlockPos.containing(event.getEventPosition()).equals(absolute);
+        NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, BlockEvent.NeighborNotifyEvent.class, neighbours);
+        NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, VanillaGameEvent.class, gameEvents);
+        try {
+            for (int i = 0; i < 10; i++) {
+                VacuumHandler.harvestTick(player, state);
+            }
+        } finally {
+            NeoForge.EVENT_BUS.unregister(neighbours);
+            NeoForge.EVENT_BUS.unregister(gameEvents);
         }
 
         helper.assertBlockProperty(bush, SweetBerryBushBlock.AGE, 1);
-        AABB around = new AABB(helper.absolutePos(bush)).inflate(1.5);
+        AABB around = new AABB(absolute).inflate(1.5);
         helper.assertTrue(!helper.getLevel().getEntitiesOfClass(ItemEntity.class, around, e -> e.getItem().is(Items.SWEET_BERRIES)).isEmpty(),
                 "berries pop off the bush");
+        helper.assertTrue(heard[0], "neighbours are told about the picked bush");
+        helper.assertTrue(heard[1], "picking emits a block change game event");
         helper.succeed();
     }
 
@@ -357,6 +377,7 @@ public final class ModGameTests {
         helper.getLevel().getEntitiesOfClass(ItemEntity.class, area, e -> true).forEach(ItemEntity::discard);
         helper.succeed();
     }
+
     @GameTest(template = "empty")
     public static void creativeVacpackTakesBigMobsAndBottomlessStacks(GameTestHelper helper) {
         Player player = player(helper, new ItemStack(ModItems.CREATIVE_VACPACK.get()));

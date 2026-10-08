@@ -4,6 +4,11 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - Unreleased
+### Fixed
+- Picking berries with the vacpack now updates the neighbouring blocks like any other block change, so redstone and
+  other mods notice it, and it no longer works in spawn protection or other places where you may not interact.
+
 ## [1.1.0] - 2026-10-07
 ### Added
 - Creative Vacpack: a pink vacpack for creative mode with bottomless tank slots and no delay between shots that
