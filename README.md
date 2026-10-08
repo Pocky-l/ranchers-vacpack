@@ -11,11 +11,22 @@
 
 <p align="center">
   <a href="https://www.curseforge.com/minecraft/mc-mods/ranchers-vacpack"><img alt="CurseForge downloads" src="https://img.shields.io/curseforge/dt/1725381?logo=curseforge&label=CurseForge&color=F16436"></a>
-  <img alt="Minecraft 1.21.1" src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A">
+  <img alt="Minecraft 1.21.1 | 1.20.1" src="https://img.shields.io/badge/Minecraft-1.21.1%20%7C%201.20.1-62B47A">
   <a href="https://neoforged.net"><img alt="NeoForge" src="https://img.shields.io/badge/Loader-NeoForge-F16436"></a>
+  <a href="https://files.minecraftforge.net"><img alt="Forge" src="https://img.shields.io/badge/Loader-Forge-DFA86A"></a>
   <a href="https://www.curseforge.com/minecraft/mc-mods/geckolib"><img alt="Requires GeckoLib" src="https://img.shields.io/badge/Requires-GeckoLib-4C9AFF"></a>
   <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue">
 </p>
+
+## Versions
+
+| Minecraft | Loader | Source |
+|---|---|---|
+| 1.21.1 | [NeoForge](https://neoforged.net) | branch `main` |
+| 1.20.1 | [Forge](https://files.minecraftforge.net) | branch `1.20.1` |
+
+Both versions have the same features. On 1.20.1 the recipe uses a Blaze Rod instead of a Breeze Rod, and the
+pulse wave burst recreates the wind charge, which does not exist in that version.
 
 ## Video
 
@@ -63,12 +74,13 @@
 | Slime Ball | Breeze Rod | Slime Ball |
 | Iron Ingot | Redstone | Iron Ingot |
 
-The recipe is unlocked as soon as you pick up a Breeze Rod. In creative mode the vacpack and the Creative Vacpack are in
-the **Pocky Mods** and **Tools & Utilities** tabs.
+The recipe is unlocked as soon as you pick up a Breeze Rod. On Minecraft 1.20.1 a Blaze Rod takes the place of the
+Breeze Rod. In creative mode the vacpack and the Creative Vacpack are in the **Pocky Mods** and **Tools & Utilities**
+tabs.
 
 ## Configuration
 
-Server config (`serverconfig/vacpack-server.toml` of the world, also editable from the in-game mod list):
+Server config (`serverconfig/vacpack-server.toml` of the world, on 1.21.1 also editable from the in-game mod list):
 
 | Section | Options |
 |---|---|
@@ -82,7 +94,8 @@ are ignored).
 
 ## Installation
 
-1. Install [NeoForge](https://neoforged.net) for Minecraft 1.21.1.
+1. Install [NeoForge](https://neoforged.net) for Minecraft 1.21.1, or [Forge](https://files.minecraftforge.net) for
+   Minecraft 1.20.1.
 2. Put [GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib) and this mod into the `mods` folder.
 
 The mod is needed on both the client and the server.

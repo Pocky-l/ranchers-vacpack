@@ -4,6 +4,18 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0+1.20.1] - Unreleased
+### Changed
+- Ported to Minecraft 1.20.1 (Forge). All features of 1.1.0 are included; the differences below come from things
+  that do not exist in 1.20.1.
+- The recipe uses a Blaze Rod instead of a Breeze Rod and unlocks when you pick up a Blaze Rod.
+- The pulse wave burst close to a block works like a wind charge from later versions: it launches you and nearby mobs,
+  toggles wooden doors, trapdoors and fence gates, presses buttons, flips levers, rings bells and blows out candles.
+  It shows puffs of air instead of wind charge gusts, without the wind charge sound, and your next landing after the
+  burst deals no fall damage.
+- Armadillos are not in the game, so they cannot be vacuumed.
+- There is no in-game config screen; edit `serverconfig/vacpack-server.toml` of the world instead.
+
 ## [1.1.0] - 2026-10-07
 ### Added
 - Creative Vacpack: a pink vacpack for creative mode with bottomless tank slots and no delay between shots that
