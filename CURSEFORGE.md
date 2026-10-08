@@ -19,6 +19,7 @@ A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs,
 * **Vacuum** — hold *Use* to suck in dropped items and small mobs. They swirl along a glowing air vortex and shrink into the nozzle. You keep full movement speed while vacuuming.
 * **Tank** — 4 slots; each holds one kind of item (up to 64) or one kind of mob (up to 10). Captured mobs keep everything: name, health, equipment, even their owner. The HUD next to the hotbar shows spinning 3D models of them.
 * **Shoot** — press *Attack* to launch one item or mob from the selected slot, hold it to fire continuously. Shots are ragdolls: they fly, bounce off walls and mobs, roll, flop onto their side and get back up. Items hit mobs for a little damage; mobs land unharmed.
+* **Special shots** — bone meal grows the plant it hits, a fire charge sets blocks and mobs on fire, a snowball freezes water into melting frosted ice and puts out fires. The item is used up when it works.
 * **Air stream holding** — mobs too big for the tank (big slimes, cows, zombies...) float in front of the nozzle and follow your aim. Shoot to launch them, let go to drop them.
 * **Pulse Wave** — shooting with an empty slot releases a blast of air that sends mobs and items flying and deflects projectiles. Fire it at the ground right next to you for a rocket jump, wind charge style.
 * **Harvesting** — vacuum ripe sweet berry bushes and glow berry vines to pull the berries off.
@@ -50,7 +51,7 @@ The recipe unlocks when you pick up a Breeze Rod.
 
 ## Configuration
 
-Everything is configurable in the server config (`vacpack-server.toml`, also editable from the in-game mod list): vacuum range and strength, which mobs and items can be vacuumed, tank size, shot speed and damage, pulse wave strength and more. Data pack tags `#vacpack:vacuumable` and `#vacpack:not_vacuumable` control what can be picked up.
+Everything is configurable in the server config (`vacpack-server.toml`, also editable from the in-game mod list): vacuum range and strength, which mobs and items can be vacuumed, tank size, shot speed and damage, special shots, pulse wave strength and more. Data pack tags `#vacpack:vacuumable` and `#vacpack:not_vacuumable` control what can be picked up.
 
 ## Credits
 

@@ -15,15 +15,18 @@ import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.VanillaGameEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -376,6 +379,104 @@ public final class ModGameTests {
         cow.discard();
         helper.getLevel().getEntitiesOfClass(ItemEntity.class, area, e -> true).forEach(ItemEntity::discard);
         helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void boneMealShotGrowsCrop(GameTestHelper helper) {
+        BlockPos wheat = plantWheat(helper);
+        TankShot shot = effectShot(helper, new ItemStack(Items.BONE_MEAL), new Vec3(2.5, 3.5, 0.5));
+
+        fly(shot, 20);
+
+        helper.assertTrue(helper.getBlockState(wheat).getValue(CropBlock.AGE) > 0, "the wheat grows");
+        helper.assertTrue(shot.isRemoved() && droppedItems(helper, wheat, Items.BONE_MEAL) == 0, "the bone meal is used up");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void snowballShotFreezesWater(GameTestHelper helper) {
+        for (int x = 1; x <= 5; x++) {
+            for (int z = -2; z <= 2; z++) {
+                helper.setBlock(x, 1, z, Blocks.STONE);
+                boolean rim = x == 1 || x == 5 || Math.abs(z) == 2;
+                helper.setBlock(x, 2, z, rim ? Blocks.STONE : Blocks.WATER);
+            }
+        }
+        TankShot shot = effectShot(helper, new ItemStack(Items.SNOWBALL), new Vec3(3.5, 4.5, 0.5));
+
+        fly(shot, 20);
+
+        helper.assertBlockPresent(Blocks.FROSTED_ICE, new BlockPos(3, 2, 0));
+        helper.assertBlockPresent(Blocks.FROSTED_ICE, new BlockPos(2, 2, -1));
+        helper.assertBlockPresent(Blocks.FROSTED_ICE, new BlockPos(4, 2, 1));
+        helper.assertTrue(shot.isRemoved() && droppedItems(helper, new BlockPos(3, 2, 0), Items.SNOWBALL) == 0, "the snowball is used up");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void fireChargeShotPlacesFire(GameTestHelper helper) {
+        helper.setBlock(2, 1, 0, Blocks.STONE);
+        TankShot shot = effectShot(helper, new ItemStack(Items.FIRE_CHARGE), new Vec3(2.5, 3.5, 0.5));
+
+        fly(shot, 20);
+
+        helper.assertBlockPresent(Blocks.FIRE, new BlockPos(2, 2, 0));
+        helper.assertTrue(shot.isRemoved() && droppedItems(helper, new BlockPos(2, 2, 0), Items.FIRE_CHARGE) == 0,
+                "the fire charge is used up");
+        helper.setBlock(2, 2, 0, Blocks.AIR);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void shotItemEffectsCanBeTurnedOff(GameTestHelper helper) {
+        ModConfigSpec.BooleanValue option = Config.SPEC.getValues().get("shooting.itemEffects");
+        helper.assertTrue(Config.shotItemEffects(), "item effects are on by default");
+        BlockPos wheat = plantWheat(helper);
+        TankShot shot;
+        option.set(false);
+        try {
+            shot = effectShot(helper, new ItemStack(Items.BONE_MEAL), new Vec3(2.5, 3.5, 0.5));
+            fly(shot, 200);
+        } finally {
+            option.set(true);
+        }
+
+        helper.assertTrue(helper.getBlockState(wheat).getValue(CropBlock.AGE) == 0, "the wheat does not grow");
+        helper.assertTrue(shot.isRemoved() && droppedItems(helper, wheat, Items.BONE_MEAL) == 1, "the bone meal drops as an item");
+        helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(wheat)).inflate(4), e -> true)
+                .forEach(ItemEntity::discard);
+        helper.succeed();
+    }
+
+    /** Wheat at age 0 on farmland; returns the wheat's relative position. */
+    private static BlockPos plantWheat(GameTestHelper helper) {
+        BlockPos wheat = new BlockPos(2, 2, 0);
+        helper.setBlock(wheat.below(), Blocks.FARMLAND);
+        helper.setBlock(wheat, Blocks.WHEAT);
+        return wheat;
+    }
+
+    /** An item shot from the tank falling straight down from {@code relative}. */
+    private static TankShot effectShot(GameTestHelper helper, ItemStack item, Vec3 relative) {
+        TankShot shot = TankShot.ofItem(helper.getLevel(), player(helper), item);
+        shot.enableItemEffect();
+        Vec3 pos = helper.absoluteVec(relative);
+        shot.moveTo(pos.x, pos.y, pos.z, 0, 0);
+        shot.setDeltaMovement(0, -0.5, 0);
+        helper.getLevel().addFreshEntity(shot);
+        return shot;
+    }
+
+    private static void fly(TankShot shot, int maxTicks) {
+        for (int i = 0; i < maxTicks && shot.isAlive(); i++) {
+            shot.tick();
+        }
+    }
+
+    private static int droppedItems(GameTestHelper helper, BlockPos relative, Item item) {
+        AABB area = new AABB(helper.absolutePos(relative)).inflate(4);
+        return helper.getLevel().getEntitiesOfClass(ItemEntity.class, area, e -> e.getItem().is(item)).stream()
+                .mapToInt(e -> e.getItem().getCount()).sum();
     }
 
     @GameTest(template = "empty")

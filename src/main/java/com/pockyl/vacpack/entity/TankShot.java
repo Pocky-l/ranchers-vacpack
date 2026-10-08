@@ -1,5 +1,7 @@
 package com.pockyl.vacpack.entity;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -20,8 +22,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Quaternionf;
@@ -35,6 +40,7 @@ import com.pockyl.vacpack.registry.ModEntities;
 import com.pockyl.vacpack.registry.ModParticles;
 import com.pockyl.vacpack.registry.ModSounds;
 import com.pockyl.vacpack.vacuum.Shot;
+import com.pockyl.vacpack.vacuum.ShotItemEffects;
 import com.pockyl.vacpack.vacuum.ShotProtection;
 
 /**
@@ -65,6 +71,8 @@ public final class TankShot extends Projectile {
     private int lastHitEntity = -1;
     private int lastHitTick;
     private int slowTicks;
+    /** Server-only: the item still has its effect for the first thing it hits (see {@link ShotItemEffects}). */
+    private boolean itemEffect;
 
     // Client-only ragdoll body: orientation and angular velocity (radians per tick) in the yaw-aligned frame, plus the
     // secondary motion of head and limbs. Previous orientation is kept for interpolation.
@@ -95,6 +103,14 @@ public final class TankShot extends Projectile {
         shot.entityData.set(MOB, mob.copy());
         shot.refreshDimensions();
         return shot;
+    }
+
+    /**
+     * Lets the item act on the first thing it hits. Only for shots fired from the tank, not for dropped items blown
+     * away by a pulse wave.
+     */
+    public void enableItemEffect() {
+        itemEffect = ShotItemEffects.hasEffect(getItem());
     }
 
     @Override
@@ -161,6 +177,9 @@ public final class TankShot extends Projectile {
         Vec3 velocity = getDeltaMovement();
 
         hitEntities(velocity);
+        if (isRemoved()) {
+            return;
+        }
         velocity = getDeltaMovement();
         if (!isNoGravity()) {
             velocity = velocity.add(0, -GRAVITY, 0);
@@ -182,6 +201,12 @@ public final class TankShot extends Projectile {
         if (level().isClientSide()) {
             tickPose(impact);
         } else {
+            if (itemEffect) {
+                tickItemEffect(before.add(0, getBbHeight() / 2, 0), velocity, moved);
+                if (isRemoved()) {
+                    return;
+                }
+            }
             if (impact > 0.35) {
                 playImpactSound(Math.min(1.0, impact));
             }
@@ -225,6 +250,12 @@ public final class TankShot extends Projectile {
         lastHitEntity = target.getId();
         lastHitTick = tickCount;
         if (!level().isClientSide()) {
+            boolean firstHit = itemEffect;
+            itemEffect = false;
+            if (firstHit && ShotItemEffects.hitMob(this, target, velocity)) {
+                useUpItem();
+                return;
+            }
             if (!carriesMob() && Config.shotDamage() > 0) {
                 target.hurt(damageSources().thrown(this, getOwner()), (float) Config.shotDamage());
             }
@@ -233,6 +264,68 @@ public final class TankShot extends Projectile {
         }
         // Bounce off the mob, keeping some of the momentum sideways.
         setDeltaMovement(velocity.scale(-0.3).add(0, 0.2, 0));
+    }
+
+    /**
+     * Looks for the first block the item runs into this tick: anything with an outline in its path (so plants and fire
+     * without collision count), or the block it collided with. A real collision ends the effect even when nothing
+     * happened; brushing through a plant or fire only does when the effect worked.
+     */
+    private void tickItemEffect(Vec3 from, Vec3 velocity, Vec3 moved) {
+        boolean collided = horizontalCollision || verticalCollision;
+        BlockHitResult hit = null;
+        if (velocity.lengthSqr() > 1.0E-6) {
+            Vec3 to = from.add(velocity).add(velocity.normalize().scale(getBbWidth() / 2 + 0.05));
+            BlockHitResult clip = level().clip(new ClipContext(from, to, ClipContext.Block.OUTLINE,
+                    ShotItemEffects.fluidMode(getItem()), this));
+            if (clip.getType() == HitResult.Type.BLOCK) {
+                hit = clip;
+                // Landing in water is the impact for items that react to water.
+                collided |= ShotItemEffects.fluidMode(getItem()) != ClipContext.Fluid.NONE
+                        && !level().getFluidState(clip.getBlockPos()).isEmpty();
+            }
+        }
+        if (hit == null && collided) {
+            hit = collisionHit(velocity, moved);
+        }
+        if (hit == null) {
+            return;
+        }
+        if (ShotItemEffects.hitBlock(this, hit)) {
+            itemEffect = false;
+            useUpItem();
+        } else if (collided) {
+            itemEffect = false;
+        }
+    }
+
+    /** The block on the side where the movement was blocked the most. */
+    private BlockHitResult collisionHit(Vec3 velocity, Vec3 moved) {
+        Direction.Axis axis = Direction.Axis.Y;
+        double blocked = -1;
+        for (Direction.Axis candidate : Direction.Axis.values()) {
+            double amount = Math.abs(velocity.get(candidate) - moved.get(candidate));
+            if (amount > blocked) {
+                blocked = amount;
+                axis = candidate;
+            }
+        }
+        Direction towards = Direction.fromAxisAndDirection(axis,
+                velocity.get(axis) > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE);
+        double reach = (axis == Direction.Axis.Y ? getBbHeight() : getBbWidth()) / 2 + 0.05;
+        Vec3 contact = center().relative(towards, reach);
+        return new BlockHitResult(contact, towards.getOpposite(), BlockPos.containing(contact), false);
+    }
+
+    /** The item was spent by its effect: the shot vanishes instead of dropping it. */
+    private void useUpItem() {
+        ItemStack rest = getItem().copy();
+        rest.shrink(1);
+        if (rest.isEmpty()) {
+            discard();
+        } else {
+            entityData.set(ITEM, rest);
+        }
     }
 
     @Override
@@ -477,6 +570,9 @@ public final class TankShot extends Projectile {
         if (carriesMob()) {
             tag.put("Mob", getMob());
         }
+        if (itemEffect) {
+            tag.putBoolean("ItemEffect", true);
+        }
     }
 
     @Override
@@ -484,5 +580,6 @@ public final class TankShot extends Projectile {
         super.readAdditionalSaveData(tag);
         entityData.set(ITEM, ItemStack.parseOptional(registryAccess(), tag.getCompound("Item")));
         entityData.set(MOB, tag.getCompound("Mob"));
+        itemEffect = tag.getBoolean("ItemEffect");
     }
 }

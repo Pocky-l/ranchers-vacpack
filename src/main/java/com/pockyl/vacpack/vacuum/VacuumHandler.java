@@ -525,6 +525,7 @@ public final class VacuumHandler {
         TankShot shot = taken.item().isEmpty()
                 ? TankShot.ofMob(level, player, taken.mob())
                 : TankShot.ofItem(level, player, taken.item());
+        shot.enableItemEffect();
         Vec3 origin = safeNozzlePos(player);
         placeShot(player, shot, origin);
         shot.setDeltaMovement(player.getLookAngle().scale(Config.shootSpeed()).add(0, 0.06, 0));
