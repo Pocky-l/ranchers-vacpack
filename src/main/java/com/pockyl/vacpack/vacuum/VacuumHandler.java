@@ -1,10 +1,12 @@
 package com.pockyl.vacpack.vacuum;
 
+import com.geckolib.animatable.GeoItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -12,8 +14,9 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
@@ -21,10 +24,10 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.monster.cubemob.Slime;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.entity.projectile.windcharge.WindCharge;
+import net.minecraft.world.entity.projectile.hurtingprojectile.windcharge.WindCharge;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.ExplosionDamageCalculator;
@@ -36,7 +39,6 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.network.PacketDistributor;
-import software.bernie.geckolib.animatable.GeoItem;
 
 import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.entity.TankShot;
@@ -48,6 +50,7 @@ import com.pockyl.vacpack.registry.ModDataComponents;
 import com.pockyl.vacpack.registry.ModParticles;
 import com.pockyl.vacpack.registry.ModSounds;
 import com.pockyl.vacpack.registry.ModTags;
+import com.pockyl.vacpack.tank.MobData;
 import com.pockyl.vacpack.tank.VacTank;
 
 import java.util.Comparator;
@@ -75,7 +78,7 @@ public final class VacuumHandler {
     /** Same settings as the vanilla wind charge explosion. */
     private static final ExplosionDamageCalculator WIND_BURST_DAMAGE = new SimpleExplosionDamageCalculator(
             true, false, Optional.of(1.22F),
-            BuiltInRegistries.BLOCK.getTag(BlockTags.BLOCKS_WIND_CHARGE_EXPLOSIONS).map(Function.identity()));
+            BuiltInRegistries.BLOCK.get(BlockTags.BLOCKS_WIND_CHARGE_EXPLOSIONS).map(Function.identity()));
 
     private VacuumHandler() {
     }
@@ -100,7 +103,9 @@ public final class VacuumHandler {
             stack.set(ModDataComponents.TANK, tank(stack).cycle(delta, Config.slotCount()));
             playAnimation(player, stack, VacpackItem.RECOIL_CONTROLLER, VacpackItem.SWITCH_ANIM);
             if (player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.playNotifySound(ModSounds.SLOT_SWITCH.get(), SoundSource.PLAYERS, 0.6F, 1.0F + 0.05F * delta);
+                // Only the player switching slots hears the click.
+                serverPlayer.connection.send(new ClientboundSoundPacket(ModSounds.SLOT_SWITCH, SoundSource.PLAYERS,
+                        player.getX(), player.getY(), player.getZ(), 0.6F, 1.0F + 0.05F * delta, player.getRandom().nextLong()));
             }
         }
     }
@@ -254,8 +259,8 @@ public final class VacuumHandler {
 
     /** Full save of a mob without its UUID (a fresh one is assigned on release, so copies never clash). */
     private static CompoundTag saveMob(Entity mob) {
-        CompoundTag data = new CompoundTag();
-        if (!mob.save(data)) {
+        CompoundTag data = MobData.save(mob);
+        if (data == null) {
             return null;
         }
         data.remove("UUID");
@@ -286,7 +291,7 @@ public final class VacuumHandler {
 
     /** Whether the mob can go into the tank of {@code stack}; the Creative Vacpack takes any mob except bosses. */
     public static boolean canVacuumMob(Player player, ItemStack stack, Mob mob) {
-        boolean eligible = VacpackItem.isCreative(stack) ? !mob.getType().is(Tags.EntityTypes.BOSSES) : fitsRegularTank(mob);
+        boolean eligible = VacpackItem.isCreative(stack) ? !mob.is(Tags.EntityTypes.BOSSES) : fitsRegularTank(mob);
         return mob.isAlive() && eligible
                 && isFree(player, mob)
                 && !recentlyShot(mob);
@@ -294,7 +299,7 @@ public final class VacuumHandler {
 
     private static boolean fitsRegularTank(Mob mob) {
         double maxSize = Config.maxMobSize();
-        return (mob.getType().is(ModTags.VACUUMABLE) || mob.isBaby() && Config.vacuumBabies())
+        return (mob.is(ModTags.VACUUMABLE) || mob.isBaby() && Config.vacuumBabies())
                 && mob.getBbWidth() <= maxSize && mob.getBbHeight() <= maxSize;
     }
 
@@ -350,7 +355,7 @@ public final class VacuumHandler {
 
     private static void markMoved(Entity entity) {
         entity.resetFallDistance();
-        entity.hasImpulse = true;
+        entity.needsSync = true;
         entity.hurtMarked = true;
     }
 
@@ -423,7 +428,7 @@ public final class VacuumHandler {
     private static boolean canHold(Player player, LivingEntity entity) {
         double maxSize = Config.maxHoldSize();
         return entity.isAlive() && entity != player && !(entity instanceof Player)
-                && !entity.getType().is(Tags.EntityTypes.BOSSES)
+                && !entity.is(Tags.EntityTypes.BOSSES)
                 && entity.getBbWidth() <= maxSize && entity.getBbHeight() <= maxSize
                 && isFree(player, entity)
                 && !recentlyShot(entity);
@@ -539,7 +544,7 @@ public final class VacuumHandler {
     private static void placeShot(Player player, TankShot shot, Vec3 center) {
         Vec3 eye = player.getEyePosition();
         Vec3 pos = center;
-        shot.moveTo(pos.x, pos.y - shot.getBbHeight() / 2, pos.z, player.getYRot(), 0);
+        shot.snapTo(pos.x, pos.y - shot.getBbHeight() / 2, pos.z, player.getYRot(), 0);
         for (int i = 0; i < 8 && !player.level().noCollision(shot); i++) {
             pos = pos.lerp(eye, 0.25);
             shot.setPos(pos.x, pos.y - shot.getBbHeight() / 2, pos.z);
@@ -579,7 +584,7 @@ public final class VacuumHandler {
             Vec3 velocity = entity.getDeltaMovement().scale(0.2).add(push);
             if (!ragdollify(player, entity, velocity)) {
                 entity.setDeltaMovement(velocity);
-                entity.hasImpulse = true;
+                entity.needsSync = true;
                 entity.hurtMarked = true;
             }
         }
@@ -612,12 +617,12 @@ public final class VacuumHandler {
         if (hit.getType() != HitResult.Type.BLOCK) {
             return;
         }
-        WindCharge source = new WindCharge(EntityType.WIND_CHARGE, level);
+        WindCharge source = new WindCharge(EntityTypes.WIND_CHARGE, level);
         source.setOwner(player);
         Vec3 at = hit.getLocation();
         level.explode(source, null, WIND_BURST_DAMAGE, at.x, at.y, at.z, WIND_BURST_RADIUS, false,
                 Level.ExplosionInteraction.TRIGGER, ParticleTypes.GUST_EMITTER_SMALL, ParticleTypes.GUST_EMITTER_LARGE,
-                SoundEvents.WIND_CHARGE_BURST);
+                WeightedList.of(), SoundEvents.WIND_CHARGE_BURST);
     }
 
     /**
@@ -632,8 +637,8 @@ public final class VacuumHandler {
         if (entity instanceof ItemEntity item) {
             shot = TankShot.ofItem(level, player, item.getItem());
         } else if (entity instanceof Mob mob && canHold(player, mob)) {
-            CompoundTag data = new CompoundTag();
-            if (!mob.save(data)) {
+            CompoundTag data = MobData.save(mob);
+            if (data == null) {
                 return false;
             }
             // The original is discarded, so the ragdoll keeps its UUID and comes back as the very same mob.
@@ -643,7 +648,7 @@ public final class VacuumHandler {
             return false;
         }
         Vec3 center = center(entity);
-        shot.moveTo(center.x, center.y - shot.getBbHeight() / 2, center.z, entity.getYRot(), 0);
+        shot.snapTo(center.x, center.y - shot.getBbHeight() / 2, center.z, entity.getYRot(), 0);
         shot.setDeltaMovement(velocity);
         entity.discard();
         level.addFreshEntity(shot);

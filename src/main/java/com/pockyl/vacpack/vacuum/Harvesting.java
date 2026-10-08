@@ -35,17 +35,17 @@ public final class Harvesting {
         BlockState state = level.getBlockState(pos);
         if (state.is(Blocks.SWEET_BERRY_BUSH)) {
             int age = state.getValue(SweetBerryBushBlock.AGE);
-            int count = 1 + level.random.nextInt(2) + (age == SweetBerryBushBlock.MAX_AGE ? 1 : 0);
+            int count = 1 + level.getRandom().nextInt(2) + (age == SweetBerryBushBlock.MAX_AGE ? 1 : 0);
             spawnFruit(level, pos, player, new ItemStack(Items.SWEET_BERRIES, count));
-            level.playSound(null, pos, ModSounds.HARVEST.get(), SoundSource.BLOCKS, 0.8F, 0.9F + level.random.nextFloat() * 0.3F);
-            level.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + level.random.nextFloat() * 0.4F);
+            level.playSound(null, pos, ModSounds.HARVEST.get(), SoundSource.BLOCKS, 0.8F, 0.9F + level.getRandom().nextFloat() * 0.3F);
+            level.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + level.getRandom().nextFloat() * 0.4F);
             BlockState picked = state.setValue(SweetBerryBushBlock.AGE, 1);
             level.setBlock(pos, picked, Block.UPDATE_CLIENTS);
             level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, picked));
         } else if (state.getBlock() instanceof CaveVines && CaveVines.hasGlowBerries(state)) {
             spawnFruit(level, pos, player, new ItemStack(Items.GLOW_BERRIES));
-            level.playSound(null, pos, ModSounds.HARVEST.get(), SoundSource.BLOCKS, 0.8F, 0.9F + level.random.nextFloat() * 0.3F);
-            level.playSound(null, pos, SoundEvents.CAVE_VINES_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + level.random.nextFloat() * 0.4F);
+            level.playSound(null, pos, ModSounds.HARVEST.get(), SoundSource.BLOCKS, 0.8F, 0.9F + level.getRandom().nextFloat() * 0.3F);
+            level.playSound(null, pos, SoundEvents.CAVE_VINES_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + level.getRandom().nextFloat() * 0.4F);
             BlockState picked = state.setValue(CaveVines.BERRIES, false);
             level.setBlock(pos, picked, Block.UPDATE_CLIENTS);
             level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, picked));

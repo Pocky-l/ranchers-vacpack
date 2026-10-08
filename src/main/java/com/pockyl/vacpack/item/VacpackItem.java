@@ -1,26 +1,28 @@
 package com.pockyl.vacpack.item;
 
+import com.geckolib.animatable.GeoItem;
+import com.geckolib.animatable.client.GeoRenderProvider;
+import com.geckolib.animatable.instance.AnimatableInstanceCache;
+import com.geckolib.animatable.manager.AnimatableManager;
+import com.geckolib.animation.AnimationController;
+import com.geckolib.animation.RawAnimation;
+import com.geckolib.animation.object.PlayState;
+import com.geckolib.renderer.GeoItemRenderer;
+import com.geckolib.util.GeckoLibUtil;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.animatable.client.GeoRenderProvider;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.client.VacpackRenderer;
@@ -28,7 +30,6 @@ import com.pockyl.vacpack.registry.ModDataComponents;
 import com.pockyl.vacpack.tank.TankSlot;
 import com.pockyl.vacpack.tank.VacTank;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -78,12 +79,12 @@ public final class VacpackItem extends Item implements GeoItem {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        return InteractionResultHolder.pass(player.getItemInHand(hand));
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        return InteractionResult.PASS;
     }
 
     @Override
-    public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
+    public boolean canDestroyBlock(ItemStack stack, BlockState state, Level level, BlockPos pos, LivingEntity user) {
         return false;
     }
 
@@ -117,23 +118,24 @@ public final class VacpackItem extends Item implements GeoItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip,
+                                TooltipFlag flag) {
         VacTank tank = tank(stack);
         if (creative) {
-            tooltip.add(Component.translatable("tooltip.vacpack.creative").withStyle(ChatFormatting.LIGHT_PURPLE));
+            tooltip.accept(Component.translatable("tooltip.vacpack.creative").withStyle(ChatFormatting.LIGHT_PURPLE));
         }
         if (tank.isEmpty()) {
-            tooltip.add(Component.translatable("tooltip.vacpack.empty").withStyle(ChatFormatting.GRAY));
+            tooltip.accept(Component.translatable("tooltip.vacpack.empty").withStyle(ChatFormatting.GRAY));
         } else {
             for (int i = 0; i < Math.max(Config.slotCount(), tank.slots().size()); i++) {
                 TankSlot slot = tank.slot(i);
                 if (!slot.isEmpty()) {
                     ChatFormatting color = i == tank.selected() ? ChatFormatting.AQUA : ChatFormatting.GRAY;
-                    tooltip.add(Component.translatable("tooltip.vacpack.slot", contentName(slot), slot.amount()).withStyle(color));
+                    tooltip.accept(Component.translatable("tooltip.vacpack.slot", contentName(slot), slot.amount()).withStyle(color));
                 }
             }
         }
-        tooltip.add(Component.translatable("tooltip.vacpack.controls").withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.accept(Component.translatable("tooltip.vacpack.controls").withStyle(ChatFormatting.DARK_GRAY));
     }
 
     public static Component contentName(TankSlot slot) {
@@ -150,13 +152,13 @@ public final class VacpackItem extends Item implements GeoItem {
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         // The fan idles slowly and spins up while vacuuming; transitions are blended over a few ticks.
-        controllers.add(new AnimationController<>(this, FAN_CONTROLLER, 4, state -> state.setAndContinue(IDLE))
+        controllers.add(new AnimationController<VacpackItem>(FAN_CONTROLLER, 4, state -> state.setAndContinue(IDLE))
                 .triggerableAnim(VACUUM_ANIM, RawAnimation.begin().thenLoop("vacuum")));
-        controllers.add(new AnimationController<>(this, RECOIL_CONTROLLER, 0, state -> PlayState.STOP)
+        controllers.add(new AnimationController<VacpackItem>(RECOIL_CONTROLLER, 0, state -> PlayState.STOP)
                 .triggerableAnim(SHOOT_ANIM, RawAnimation.begin().thenPlay("shoot"))
                 .triggerableAnim(PULSE_ANIM, RawAnimation.begin().thenPlay("pulse"))
                 .triggerableAnim(SWITCH_ANIM, RawAnimation.begin().thenPlay("switch")));
-        controllers.add(new AnimationController<>(this, GULP_CONTROLLER, 0, state -> PlayState.STOP)
+        controllers.add(new AnimationController<VacpackItem>(GULP_CONTROLLER, 0, state -> PlayState.STOP)
                 .triggerableAnim(GULP_ANIM, RawAnimation.begin().thenPlay("gulp")));
     }
 
@@ -172,7 +174,7 @@ public final class VacpackItem extends Item implements GeoItem {
             private VacpackRenderer renderer;
 
             @Override
-            public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
+            public GeoItemRenderer<VacpackItem> getGeoItemRenderer() {
                 if (renderer == null) {
                     renderer = new VacpackRenderer(creative);
                 }

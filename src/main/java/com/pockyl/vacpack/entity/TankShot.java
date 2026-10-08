@@ -7,20 +7,24 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.InterpolationHandler;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.animal.Chicken;
-import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.animal.chicken.Chicken;
+import net.minecraft.world.entity.monster.cubemob.Slime;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -34,6 +38,7 @@ import com.pockyl.vacpack.registry.ModAttachments;
 import com.pockyl.vacpack.registry.ModEntities;
 import com.pockyl.vacpack.registry.ModParticles;
 import com.pockyl.vacpack.registry.ModSounds;
+import com.pockyl.vacpack.tank.MobData;
 import com.pockyl.vacpack.vacuum.Shot;
 import com.pockyl.vacpack.vacuum.ShotProtection;
 
@@ -58,7 +63,7 @@ public final class TankShot extends Projectile {
     private static final int ENTITY_HIT_COOLDOWN = 10;
 
     private static final EntityDataAccessor<ItemStack> ITEM = SynchedEntityData.defineId(TankShot.class, EntityDataSerializers.ITEM_STACK);
-    private static final EntityDataAccessor<CompoundTag> MOB = SynchedEntityData.defineId(TankShot.class, EntityDataSerializers.COMPOUND_TAG);
+    private static final EntityDataAccessor<CompoundTag> MOB = SynchedEntityData.defineId(TankShot.class, ModEntities.COMPOUND_TAG.get());
 
     /** Client-only render copy of the carried mob, created lazily from {@link #MOB}. */
     private Entity displayMob;
@@ -77,6 +82,12 @@ public final class TankShot extends Projectile {
 
     /** Client-only: remaining offset to the server position, applied gradually instead of snapping. */
     private Vec3 correction = Vec3.ZERO;
+    private final InterpolationHandler interpolation = new InterpolationHandler(this, 0) {
+        @Override
+        public void interpolateTo(Vec3 position, float yRot, float xRot) {
+            onServerPosition(position, yRot, xRot);
+        }
+    };
 
     public TankShot(EntityType<? extends TankShot> type, Level level) {
         super(type, level);
@@ -117,7 +128,7 @@ public final class TankShot extends Projectile {
         if (!carriesMob()) {
             return super.getDimensions(pose);
         }
-        return EntityType.by(getMob())
+        return MobData.type(getMob())
                 .map(type -> {
                     EntityDimensions mob = type.getDimensions();
                     float size = Mth.clamp((mob.width() + mob.height()) / 2, 0.3F, 0.9F);
@@ -140,7 +151,7 @@ public final class TankShot extends Projectile {
 
     public Entity getDisplayMob() {
         if (displayMob == null && carriesMob()) {
-            displayMob = EntityType.create(getMob(), level()).orElse(null);
+            displayMob = MobData.create(getMob(), level()).orElse(null);
         }
         return displayMob;
     }
@@ -224,11 +235,13 @@ public final class TankShot extends Projectile {
         }
         lastHitEntity = target.getId();
         lastHitTick = tickCount;
-        if (!level().isClientSide()) {
-            if (!carriesMob() && Config.shotDamage() > 0) {
-                target.hurt(damageSources().thrown(this, getOwner()), (float) Config.shotDamage());
+        if (level() instanceof ServerLevel level) {
+            DamageSource source = damageSources().thrown(this, getOwner());
+            float damage = carriesMob() ? 0.0F : (float) Config.shotDamage();
+            if (damage > 0) {
+                target.hurtServer(level, source, damage);
             }
-            target.knockback(carriesMob() ? 0.9 : 0.6, -velocity.x, -velocity.z);
+            target.knockback(carriesMob() ? 0.9 : 0.6, -velocity.x, -velocity.z, source, damage);
             playImpactSound(0.8);
         }
         // Bounce off the mob, keeping some of the momentum sideways.
@@ -245,12 +258,17 @@ public final class TankShot extends Projectile {
     // Differences explained by that delay are ignored, real divergence is blended in over several ticks, and only a
     // large one snaps.
     @Override
-    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
-        Vec3 offset = new Vec3(x, y, z).subtract(position());
+    public InterpolationHandler getInterpolation() {
+        return interpolation;
+    }
+
+    private void onServerPosition(Vec3 position, float yRot, float xRot) {
+        Vec3 offset = position.subtract(position());
         double tolerance = 0.3 + getDeltaMovement().length() * 3.0;
         if (offset.length() > 4.0) {
             correction = Vec3.ZERO;
-            super.lerpTo(x, y, z, yRot, xRot, steps);
+            setPos(position);
+            setRot(yRot, xRot);
         } else if (offset.length() > tolerance) {
             correction = offset;
         }
@@ -258,9 +276,9 @@ public final class TankShot extends Projectile {
 
     // Server velocity updates are just as stale; only take them when something pushed the ragdoll (e.g. a pulse wave).
     @Override
-    public void lerpMotion(double x, double y, double z) {
-        if (new Vec3(x, y, z).distanceTo(getDeltaMovement()) > 0.6) {
-            super.lerpMotion(x, y, z);
+    public void lerpMotion(Vec3 movement) {
+        if (movement.distanceTo(getDeltaMovement()) > 0.6) {
+            super.lerpMotion(movement);
         }
     }
 
@@ -364,7 +382,7 @@ public final class TankShot extends Projectile {
         Entity mob = getDisplayMob();
         if (mob instanceof LivingEntity living) {
             // Legs and arms flail with the tumbling.
-            living.walkAnimation.update(flail * 0.9F, 0.5F);
+            living.walkAnimation.update(flail * 0.9F, 0.5F, 1.0F);
             living.tickCount++;
             living.oAttackAnim = living.attackAnim;
             living.attackAnim = flail * (0.5F + 0.5F * Mth.sin(tickCount * 0.9F));
@@ -422,13 +440,13 @@ public final class TankShot extends Projectile {
         }
         Shot shot = new Shot(getOwner() != null ? getOwner().getUUID() : Shot.NONE.shooter(), level.getGameTime());
         if (carriesMob()) {
-            Entity mob = EntityType.loadEntityRecursive(getMob(), level, entity -> {
-                entity.moveTo(pos.x, pos.y - entity.getBbHeight() / 2, pos.z, getYRot(), 0);
+            Entity mob = MobData.load(getMob(), level, entity -> {
+                entity.snapTo(pos.x, pos.y - entity.getBbHeight() / 2, pos.z, getYRot(), 0);
                 liftOutOfBlocks(entity);
                 return entity;
             });
             if (mob == null) {
-                Vacpack.LOGGER.warn("Discarding shot mob that can no longer be loaded: {}", getMob().getString("id"));
+                Vacpack.LOGGER.warn("Discarding shot mob that can no longer be loaded: {}", getMob().getStringOr("id", "?"));
             } else {
                 mob.setDeltaMovement(velocity);
                 mob.resetFallDistance();
@@ -436,7 +454,7 @@ public final class TankShot extends Projectile {
                     living.setYBodyRot(getYRot());
                     living.setYHeadRot(getYRot());
                 }
-                mob.hasImpulse = true;
+                mob.needsSync = true;
                 mob.hurtMarked = true;
                 mob.setData(ModAttachments.SHOT, shot);
                 mob.setData(ModAttachments.FALL_GUARD, true);
@@ -469,20 +487,20 @@ public final class TankShot extends Projectile {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
+    protected void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
         if (!getItem().isEmpty()) {
-            tag.put("Item", getItem().save(registryAccess()));
+            output.store("Item", ItemStack.CODEC, getItem());
         }
         if (carriesMob()) {
-            tag.put("Mob", getMob());
+            output.store("Mob", CompoundTag.CODEC, getMob());
         }
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
-        entityData.set(ITEM, ItemStack.parseOptional(registryAccess(), tag.getCompound("Item")));
-        entityData.set(MOB, tag.getCompound("Mob"));
+    protected void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        entityData.set(ITEM, input.read("Item", ItemStack.CODEC).orElse(ItemStack.EMPTY));
+        entityData.set(MOB, input.read("Mob", CompoundTag.CODEC).orElseGet(CompoundTag::new));
     }
 }

@@ -67,7 +67,7 @@ public record TankSlot(ItemStack item, int count, List<CompoundTag> mobs) {
     }
 
     public Optional<EntityType<?>> mobType() {
-        return holdsMobs() ? EntityType.by(mobs.getFirst()) : Optional.empty();
+        return holdsMobs() ? MobData.type(mobs.getFirst()) : Optional.empty();
     }
 
     public boolean matchesItem(ItemStack stack) {

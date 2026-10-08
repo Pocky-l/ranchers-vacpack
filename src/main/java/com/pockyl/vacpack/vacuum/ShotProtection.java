@@ -56,7 +56,7 @@ public final class ShotProtection {
             }
             long age = shot.age(entity.level().getGameTime());
             if (age <= SMOOTH_SYNC_TICKS && !entity.onGround()) {
-                entity.hasImpulse = true;
+                entity.needsSync = true;
             }
             if (age > FALL_GUARD_TICKS) {
                 entity.removeData(ModAttachments.FALL_GUARD);
