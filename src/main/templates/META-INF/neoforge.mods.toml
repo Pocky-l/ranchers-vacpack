@@ -9,7 +9,7 @@ version="${mod_version}"
 displayName="${mod_name}"
 authors="${mod_authors}"
 displayURL="${mod_url}"
-logoFile="logo.png"
+iconFile="logo.png"
 description='''${mod_description}'''
 
 [[dependencies.${mod_id}]]
