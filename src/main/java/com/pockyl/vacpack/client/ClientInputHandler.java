@@ -4,23 +4,23 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.HitResult;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import com.pockyl.vacpack.Vacpack;
 import com.pockyl.vacpack.item.VacpackItem;
 import com.pockyl.vacpack.network.CycleSlotPayload;
+import com.pockyl.vacpack.network.ModNetwork;
 import com.pockyl.vacpack.network.VacpackInputPayload;
 
 /**
  * Turns the use/attack buttons into vacuum/shoot while a vacpack is in the main hand.
  * Vanilla handling of those buttons is suppressed, except sneak + use on a block, so chests and doors stay usable.
  */
-@EventBusSubscriber(modid = Vacpack.MOD_ID, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = Vacpack.MOD_ID, value = Dist.CLIENT)
 public final class ClientInputHandler {
     private static boolean sentVacuum;
     private static boolean sentShoot;
@@ -48,7 +48,10 @@ public final class ClientInputHandler {
     }
 
     @SubscribeEvent
-    public static void onClientTick(ClientTickEvent.Post event) {
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         if (player == null || minecraft.getConnection() == null) {
@@ -63,12 +66,12 @@ public final class ClientInputHandler {
         if (vacuum != sentVacuum || shoot != sentShoot) {
             sentVacuum = vacuum;
             sentShoot = shoot;
-            PacketDistributor.sendToServer(new VacpackInputPayload(vacuum, shoot));
+            ModNetwork.sendToServer(new VacpackInputPayload(vacuum, shoot));
         }
 
         while (ModKeyMappings.CYCLE_SLOT.consumeClick()) {
             if (active) {
-                PacketDistributor.sendToServer(new CycleSlotPayload(1));
+                ModNetwork.sendToServer(new CycleSlotPayload(1));
             }
         }
     }
@@ -78,9 +81,9 @@ public final class ClientInputHandler {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         if (player != null && minecraft.screen == null && player.isShiftKeyDown() && holdsVacpack(player)
-                && event.getScrollDeltaY() != 0) {
+                && event.getScrollDelta() != 0) {
             event.setCanceled(true);
-            PacketDistributor.sendToServer(new CycleSlotPayload(event.getScrollDeltaY() > 0 ? -1 : 1));
+            ModNetwork.sendToServer(new CycleSlotPayload(event.getScrollDelta() > 0 ? -1 : 1));
         }
     }
 }

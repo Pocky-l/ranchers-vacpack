@@ -1,11 +1,8 @@
 package com.pockyl.vacpack.tank;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 
@@ -13,26 +10,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Immutable contents of a vacpack tank, stored as a data component on the item.
+ * Immutable contents of a vacpack tank, stored in the item's NBT (see {@code ModDataComponents}).
  * All mutators return a new instance; slot count and capacities come from the config and are passed in,
  * so a tank keeps working when the config changes (extra slots are kept but cannot be filled).
  */
 public record VacTank(List<TankSlot> slots, int selected) {
     public static final VacTank EMPTY = new VacTank(List.of(), 0);
 
-    public static final Codec<VacTank> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            TankSlot.CODEC.listOf().optionalFieldOf("slots", List.of()).forGetter(VacTank::slots),
-            Codec.INT.optionalFieldOf("selected", 0).forGetter(VacTank::selected)
-    ).apply(instance, VacTank::new));
-
-    public static final StreamCodec<RegistryFriendlyByteBuf, VacTank> STREAM_CODEC = StreamCodec.composite(
-            TankSlot.STREAM_CODEC.apply(ByteBufCodecs.list()), VacTank::slots,
-            ByteBufCodecs.VAR_INT, VacTank::selected,
-            VacTank::new);
-
     public VacTank {
         slots = List.copyOf(slots);
         selected = Math.max(0, selected);
+    }
+
+    public static VacTank load(CompoundTag tag) {
+        List<TankSlot> slots = new ArrayList<>();
+        ListTag list = tag.getList("slots", Tag.TAG_COMPOUND);
+        for (int i = 0; i < list.size(); i++) {
+            slots.add(TankSlot.load(list.getCompound(i)));
+        }
+        return new VacTank(slots, tag.getInt("selected"));
+    }
+
+    public CompoundTag save() {
+        CompoundTag tag = new CompoundTag();
+        ListTag list = new ListTag();
+        slots.forEach(slot -> list.add(slot.save()));
+        tag.put("slots", list);
+        tag.putInt("selected", selected);
+        return tag;
     }
 
     public TankSlot slot(int index) {
@@ -57,8 +62,8 @@ public record VacTank(List<TankSlot> slots, int selected) {
             copy.add(TankSlot.EMPTY);
         }
         copy.set(index, slot);
-        while (!copy.isEmpty() && copy.getLast().isEmpty()) {
-            copy.removeLast();
+        while (!copy.isEmpty() && copy.get(copy.size() - 1).isEmpty()) {
+            copy.remove(copy.size() - 1);
         }
         return new VacTank(copy, selected);
     }
@@ -139,7 +144,7 @@ public record VacTank(List<TankSlot> slots, int selected) {
         }
         if (slot.holdsMobs()) {
             List<CompoundTag> mobs = new ArrayList<>(slot.mobs());
-            CompoundTag mob = mobs.removeLast();
+            CompoundTag mob = mobs.remove(mobs.size() - 1);
             return new Taken(withSlot(selected, mobs.isEmpty() ? TankSlot.EMPTY : TankSlot.ofMobs(mobs)), ItemStack.EMPTY, mob);
         }
         return new Taken(this, ItemStack.EMPTY, null);

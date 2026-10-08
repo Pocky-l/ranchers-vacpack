@@ -8,7 +8,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,14 +36,17 @@ public final class MobIcons {
             return false;
         }
         float extent = Math.max(entity.getBbWidth(), entity.getBbHeight());
-        float scale = size * 0.75F / Math.max(extent, 0.3F);
+        int scale = Math.max(1, Math.round(size * 0.75F / Math.max(extent, 0.3F)));
         float time = (Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0) + partialTick;
         Quaternionf pose = Axis.ZP.rotation((float) Math.PI)
                 .mul(Axis.XP.rotationDegrees(-12.0F))
                 .mul(Axis.YP.rotationDegrees(time * 2.0F));
         graphics.enableScissor(x, y, x + size, y + size);
-        InventoryScreen.renderEntityInInventory(graphics, x + size / 2.0F, y + size / 2.0F, scale,
-                new Vector3f(0, entity.getBbHeight() / 2.0F, 0), pose, null, entity);
+        graphics.pose().pushPose();
+        // The model is drawn from its feet: put them half its height below the middle of the box to centre it.
+        graphics.pose().translate(x + size / 2.0F, y + size / 2.0F + scale * entity.getBbHeight() / 2.0F, 0);
+        InventoryScreen.renderEntityInInventory(graphics, 0, 0, scale, pose, null, entity);
+        graphics.pose().popPose();
         graphics.disableScissor();
         return true;
     }

@@ -1,7 +1,6 @@
 package com.pockyl.vacpack.vacuum;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -10,38 +9,35 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.entity.projectile.windcharge.WindCharge;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.SimpleExplosionDamageCalculator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.Tags;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.common.Tags;
 import software.bernie.geckolib.animatable.GeoItem;
 
 import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.entity.TankShot;
 import com.pockyl.vacpack.item.VacpackItem;
 import com.pockyl.vacpack.network.CapturePayload;
+import com.pockyl.vacpack.network.ModNetwork;
 import com.pockyl.vacpack.network.VacuumStatePayload;
 import com.pockyl.vacpack.registry.ModAttachments;
 import com.pockyl.vacpack.registry.ModDataComponents;
@@ -51,8 +47,6 @@ import com.pockyl.vacpack.registry.ModTags;
 import com.pockyl.vacpack.tank.VacTank;
 
 import java.util.Comparator;
-import java.util.Optional;
-import java.util.function.Function;
 
 /** Server-side vacpack behavior: suction, capture, holding, shooting, pulse wave and harvesting. */
 public final class VacuumHandler {
@@ -69,13 +63,10 @@ public final class VacuumHandler {
     private static final int HOLD_SEARCH_INTERVAL = 4;
     private static final double HOLD_MAX_SPEED = 1.2;
     private static final double PULSE_CONE_DOT = Math.cos(Math.toRadians(50));
+    private static final double DEFAULT_LIVING_GRAVITY = 0.08;
+    private static final double ITEM_GRAVITY = 0.04;
     /** A pulse wave hitting a block closer than this bursts like a wind charge. */
     private static final double WIND_BURST_REACH = 4.0;
-    private static final float WIND_BURST_RADIUS = 1.2F;
-    /** Same settings as the vanilla wind charge explosion. */
-    private static final ExplosionDamageCalculator WIND_BURST_DAMAGE = new SimpleExplosionDamageCalculator(
-            true, false, Optional.of(1.22F),
-            BuiltInRegistries.BLOCK.getTag(BlockTags.BLOCKS_WIND_CHARGE_EXPLOSIONS).map(Function.identity()));
 
     private VacuumHandler() {
     }
@@ -85,7 +76,7 @@ public final class VacuumHandler {
     // ------------------------------------------------------------------------------------------------
 
     public static void setInput(Player player, boolean vacuum, boolean shoot) {
-        VacuumState state = player.getData(ModAttachments.VACUUM_STATE);
+        VacuumState state = ModAttachments.getData(player, ModAttachments.VACUUM_STATE);
         if (shoot && !state.shooting) {
             state.freshPress = true;
         }
@@ -97,7 +88,7 @@ public final class VacuumHandler {
     public static void cycleSlot(Player player, int delta) {
         ItemStack stack = player.getMainHandItem();
         if (stack.getItem() instanceof VacpackItem) {
-            stack.set(ModDataComponents.TANK, tank(stack).cycle(delta, Config.slotCount()));
+            ModDataComponents.setTank(stack, tank(stack).cycle(delta, Config.slotCount()));
             playAnimation(player, stack, VacpackItem.RECOIL_CONTROLLER, VacpackItem.SWITCH_ANIM);
             if (player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.playNotifySound(ModSounds.SLOT_SWITCH.get(), SoundSource.PLAYERS, 0.6F, 1.0F + 0.05F * delta);
@@ -107,14 +98,14 @@ public final class VacuumHandler {
 
     /** Re-sends the vacuuming state of {@code target} to a player who just started tracking it. */
     public static void syncTo(ServerPlayer tracker, Player target) {
-        VacuumState state = target.getExistingDataOrNull(ModAttachments.VACUUM_STATE);
+        VacuumState state = ModAttachments.getExistingDataOrNull(target, ModAttachments.VACUUM_STATE);
         if (state != null && state.vacuuming) {
-            PacketDistributor.sendToPlayer(tracker, new VacuumStatePayload(target.getId(), true));
+            ModNetwork.sendToPlayer(tracker, new VacuumStatePayload(target.getId(), true));
         }
     }
 
     public static void tick(Player player) {
-        VacuumState state = player.getExistingDataOrNull(ModAttachments.VACUUM_STATE);
+        VacuumState state = ModAttachments.getExistingDataOrNull(player, ModAttachments.VACUUM_STATE);
         if (state == null) {
             return;
         }
@@ -161,7 +152,7 @@ public final class VacuumHandler {
             stopFanAnimation(player, state);
         }
         if (player instanceof ServerPlayer) {
-            PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new VacuumStatePayload(player.getId(), vacuuming));
+            ModNetwork.sendToPlayersTrackingEntityAndSelf(player, new VacuumStatePayload(player.getId(), vacuuming));
         }
     }
 
@@ -234,7 +225,7 @@ public final class VacuumHandler {
         }
 
         if (!tank.equals(initial)) {
-            stack.set(ModDataComponents.TANK, tank);
+            ModDataComponents.setTank(stack, tank);
         }
         return blocked;
     }
@@ -265,7 +256,7 @@ public final class VacuumHandler {
 
     private static void animateCapture(Player player, Entity entity) {
         if (player.level() instanceof ServerLevel) {
-            PacketDistributor.sendToPlayersTrackingEntity(entity, new CapturePayload(entity.getId(), player.getId()));
+            ModNetwork.sendToPlayersTrackingEntity(entity, new CapturePayload(entity.getId(), player.getId()));
         }
     }
 
@@ -306,7 +297,7 @@ public final class VacuumHandler {
     }
 
     private static boolean recentlyShot(Entity entity) {
-        Shot shot = entity.getExistingDataOrNull(ModAttachments.SHOT);
+        Shot shot = ModAttachments.getExistingDataOrNull(entity, ModAttachments.SHOT);
         return shot != null && shot.age(entity.level().getGameTime()) <= SHOT_IMMUNITY_TICKS;
     }
 
@@ -335,7 +326,7 @@ public final class VacuumHandler {
         Vec3 swirl = radial.lengthSqr() > 0.0025
                 ? axis.cross(radial).normalize().scale(SWIRL_SPEED * Math.min(radial.length(), 1.5))
                 : Vec3.ZERO;
-        Vec3 lift = new Vec3(0, entity.getGravity(), 0);
+        Vec3 lift = new Vec3(0, gravity(entity), 0);
 
         entity.setDeltaMovement(entity.getDeltaMovement().scale(0.25).add(inward).add(swirl).add(lift));
         markMoved(entity);
@@ -393,7 +384,7 @@ public final class VacuumHandler {
         if (velocity.length() > HOLD_MAX_SPEED) {
             velocity = velocity.normalize().scale(HOLD_MAX_SPEED);
         }
-        held.setDeltaMovement(velocity.add(0, held.getGravity(), 0));
+        held.setDeltaMovement(velocity.add(0, gravity(held), 0));
         if (held instanceof Mob mob) {
             mob.getNavigation().stop();
         }
@@ -498,7 +489,7 @@ public final class VacuumHandler {
      * @return cooldown in ticks until the next shot
      */
     public static int shoot(Player player, ItemStack stack) {
-        VacuumState state = player.getExistingDataOrNull(ModAttachments.VACUUM_STATE);
+        VacuumState state = ModAttachments.getExistingDataOrNull(player, ModAttachments.VACUUM_STATE);
         if (state != null && shootHeld(player, stack, state)) {
             return HELD_SHOT_COOLDOWN;
         }
@@ -530,7 +521,7 @@ public final class VacuumHandler {
         shot.setDeltaMovement(player.getLookAngle().scale(Config.shootSpeed()).add(0, 0.06, 0));
         level.addFreshEntity(shot);
 
-        stack.set(ModDataComponents.TANK, taken.tank());
+        ModDataComponents.setTank(stack, taken.tank());
         shotEffects(player, stack, origin);
         return Config.shootCooldown();
     }
@@ -591,33 +582,22 @@ public final class VacuumHandler {
         for (double distance = 2.5; distance <= range; distance += 1.5) {
             Vec3 p = nozzle.add(look.scale(distance));
             particles(player, ModParticles.PULSE_RING.get(), p, 1, 0, 0);
-            particles(player, ParticleTypes.SMALL_GUST, p, 1, 0.15 * distance, 0);
+            particles(player, ParticleTypes.POOF, p, 1, 0.15 * distance, 0);
         }
         playSound(player, ModSounds.PULSE.get(), 0.45F, 0.95F + player.getRandom().nextFloat() * 0.1F);
         playAnimation(player, stack, VacpackItem.RECOIL_CONTROLLER, VacpackItem.PULSE_ANIM);
     }
 
-    /**
-     * A pulse wave hitting a block close by bursts exactly like a vanilla wind charge hitting it: same explosion
-     * (radius 1.2, no damage, 1.22 knockback, triggers doors/buttons/levers, wind-charge-proof blocks respected), so
-     * shooting at your feet or a wall rocket-jumps you, with the wind charge's fall damage protection. A wind charge
-     * owned by the player, never added to the world, is used as the explosion source for that.
-     */
+    /** A pulse wave hitting a block close by bursts like a wind charge, see {@link WindBurst}. */
     public static void windBurst(Player player, Vec3 eye, Vec3 look) {
         if (!Config.pulseWindBurst() || !(player.level() instanceof ServerLevel level)) {
             return;
         }
         Vec3 end = eye.add(look.scale(WIND_BURST_REACH));
         BlockHitResult hit = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-        if (hit.getType() != HitResult.Type.BLOCK) {
-            return;
+        if (hit.getType() == HitResult.Type.BLOCK) {
+            WindBurst.explode(level, player, hit);
         }
-        WindCharge source = new WindCharge(EntityType.WIND_CHARGE, level);
-        source.setOwner(player);
-        Vec3 at = hit.getLocation();
-        level.explode(source, null, WIND_BURST_DAMAGE, at.x, at.y, at.z, WIND_BURST_RADIUS, false,
-                Level.ExplosionInteraction.TRIGGER, ParticleTypes.GUST_EMITTER_SMALL, ParticleTypes.GUST_EMITTER_LARGE,
-                SoundEvents.WIND_CHARGE_BURST);
     }
 
     /**
@@ -724,11 +704,23 @@ public final class VacuumHandler {
         }
     }
 
+    /** Downward acceleration the entity applies to itself every tick; zero for entities without gravity. */
+    public static double gravity(Entity entity) {
+        if (entity.isNoGravity()) {
+            return 0.0;
+        }
+        if (entity instanceof LivingEntity living) {
+            AttributeInstance gravity = living.getAttribute(ForgeMod.ENTITY_GRAVITY.get());
+            return gravity != null ? gravity.getValue() : DEFAULT_LIVING_GRAVITY;
+        }
+        return entity instanceof ItemEntity ? ITEM_GRAVITY : 0.0;
+    }
+
     private static Vec3 center(Entity entity) {
         return entity.getBoundingBox().getCenter();
     }
 
     private static VacTank tank(ItemStack stack) {
-        return stack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY);
+        return ModDataComponents.getTank(stack);
     }
 }

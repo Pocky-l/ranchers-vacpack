@@ -3,15 +3,14 @@ package com.pockyl.vacpack.event;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
-import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.server.ServerStoppedEvent;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingFallEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import com.pockyl.vacpack.Vacpack;
 import com.pockyl.vacpack.registry.ModItems;
@@ -22,21 +21,20 @@ public final class VacpackEvents {
     private VacpackEvents() {
     }
 
-    @EventBusSubscriber(modid = Vacpack.MOD_ID)
-    /** NeoForge routes each event to the mod or game bus by its type, so one subscriber annotation fits both. */
+    @Mod.EventBusSubscriber(modid = Vacpack.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static final class GameBus {
         private GameBus() {
         }
 
         @SubscribeEvent
-        public static void onPlayerTick(PlayerTickEvent.Post event) {
-            if (!event.getEntity().level().isClientSide()) {
-                VacuumHandler.tick(event.getEntity());
+        public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+            if (event.phase == TickEvent.Phase.END && !event.player.level().isClientSide()) {
+                VacuumHandler.tick(event.player);
             }
         }
 
         @SubscribeEvent
-        public static void onIncomingDamage(LivingIncomingDamageEvent event) {
+        public static void onAttack(LivingAttackEvent event) {
             if (ShotProtection.isInvulnerable(event.getEntity())) {
                 event.setCanceled(true);
             }
@@ -50,8 +48,10 @@ public final class VacpackEvents {
         }
 
         @SubscribeEvent
-        public static void onServerTick(ServerTickEvent.Post event) {
-            ShotProtection.tick();
+        public static void onServerTick(TickEvent.ServerTickEvent event) {
+            if (event.phase == TickEvent.Phase.END) {
+                ShotProtection.tick();
+            }
         }
 
         @SubscribeEvent
@@ -67,7 +67,7 @@ public final class VacpackEvents {
         }
     }
 
-    @EventBusSubscriber(modid = Vacpack.MOD_ID)
+    @Mod.EventBusSubscriber(modid = Vacpack.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
     public static final class ModBus {
         private ModBus() {
         }

@@ -10,12 +10,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RenderLivingEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.client.event.RenderLivingEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.joml.Quaternionf;
 
 import com.pockyl.vacpack.Vacpack;
@@ -26,7 +26,7 @@ import com.pockyl.vacpack.network.ShotLandedPayload;
  * After a ragdoll turns back into the mob, the mob starts in the ragdoll's last orientation (lying on its side, on its
  * back...) and gets up smoothly, instead of snapping to standing.
  */
-@EventBusSubscriber(modid = Vacpack.MOD_ID, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = Vacpack.MOD_ID, value = Dist.CLIENT)
 public final class LandingPoses {
     private static final float RECOVERY_TICKS = 12.0F;
 
@@ -80,9 +80,9 @@ public final class LandingPoses {
 
     /** Drops recoveries of mobs that were never rendered (e.g. out of view), so the map cannot grow. */
     @SubscribeEvent
-    public static void onClientTick(ClientTickEvent.Post event) {
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
         ClientLevel level = Minecraft.getInstance().level;
-        if (level != null && !TILTS.isEmpty()) {
+        if (event.phase == TickEvent.Phase.END && level != null && !TILTS.isEmpty()) {
             long now = level.getGameTime();
             TILTS.values().removeIf(tilt -> now - tilt.startTick() > RECOVERY_TICKS * 4);
         }

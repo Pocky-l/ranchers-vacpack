@@ -16,11 +16,11 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.Vacpack;
@@ -33,7 +33,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /** Client-side suction effects for every vacuuming player in view: humming loop and the swirling particle beam. */
-@EventBusSubscriber(modid = Vacpack.MOD_ID, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = Vacpack.MOD_ID, value = Dist.CLIENT)
 public final class ClientVacuumEffects {
     private static final int RING_INTERVAL = 6;
     private static final int RING_DOTS = 10;
@@ -105,10 +105,10 @@ public final class ClientVacuumEffects {
     }
 
     @SubscribeEvent
-    public static void onClientTick(ClientTickEvent.Post event) {
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
         ClientLevel level = minecraft.level;
-        if (level == null || minecraft.isPaused() || VACUUMING.isEmpty()) {
+        if (event.phase != TickEvent.Phase.END || level == null || minecraft.isPaused() || VACUUMING.isEmpty()) {
             return;
         }
         VACUUMING.removeIf(id -> !(level.getEntity(id) instanceof Player));

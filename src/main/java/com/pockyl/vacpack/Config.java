@@ -1,39 +1,39 @@
 package com.pockyl.vacpack;
 
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
 
 /**
  * Server config: synced to clients, so the HUD shows the server's slot count.
- * Read values through the accessors РІР‚вЂќ they fall back to defaults while no world is loaded.
+ * Read values through the accessors; they fall back to defaults while no world is loaded.
  */
 public final class Config {
-    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
 
-    private static final ModConfigSpec.DoubleValue RANGE;
-    private static final ModConfigSpec.IntValue CONE_ANGLE;
-    private static final ModConfigSpec.DoubleValue PULL_STRENGTH;
-    private static final ModConfigSpec.DoubleValue CAPTURE_DISTANCE;
-    private static final ModConfigSpec.BooleanValue VACUUM_ITEMS;
-    private static final ModConfigSpec.BooleanValue VACUUM_MOBS;
-    private static final ModConfigSpec.DoubleValue MAX_MOB_SIZE;
-    private static final ModConfigSpec.BooleanValue VACUUM_BABIES;
-    private static final ModConfigSpec.BooleanValue HARVEST_BERRIES;
-    private static final ModConfigSpec.BooleanValue HOLD_MOBS;
-    private static final ModConfigSpec.DoubleValue MAX_HOLD_SIZE;
+    private static final ForgeConfigSpec.DoubleValue RANGE;
+    private static final ForgeConfigSpec.IntValue CONE_ANGLE;
+    private static final ForgeConfigSpec.DoubleValue PULL_STRENGTH;
+    private static final ForgeConfigSpec.DoubleValue CAPTURE_DISTANCE;
+    private static final ForgeConfigSpec.BooleanValue VACUUM_ITEMS;
+    private static final ForgeConfigSpec.BooleanValue VACUUM_MOBS;
+    private static final ForgeConfigSpec.DoubleValue MAX_MOB_SIZE;
+    private static final ForgeConfigSpec.BooleanValue VACUUM_BABIES;
+    private static final ForgeConfigSpec.BooleanValue HARVEST_BERRIES;
+    private static final ForgeConfigSpec.BooleanValue HOLD_MOBS;
+    private static final ForgeConfigSpec.DoubleValue MAX_HOLD_SIZE;
 
-    private static final ModConfigSpec.IntValue SLOT_COUNT;
-    private static final ModConfigSpec.IntValue ITEM_CAPACITY;
-    private static final ModConfigSpec.IntValue MOB_CAPACITY;
+    private static final ForgeConfigSpec.IntValue SLOT_COUNT;
+    private static final ForgeConfigSpec.IntValue ITEM_CAPACITY;
+    private static final ForgeConfigSpec.IntValue MOB_CAPACITY;
 
-    private static final ModConfigSpec.DoubleValue SHOOT_SPEED;
-    private static final ModConfigSpec.IntValue SHOOT_COOLDOWN;
-    private static final ModConfigSpec.DoubleValue SHOT_DAMAGE;
+    private static final ForgeConfigSpec.DoubleValue SHOOT_SPEED;
+    private static final ForgeConfigSpec.IntValue SHOOT_COOLDOWN;
+    private static final ForgeConfigSpec.DoubleValue SHOT_DAMAGE;
 
-    private static final ModConfigSpec.BooleanValue PULSE_ENABLED;
-    private static final ModConfigSpec.DoubleValue PULSE_RANGE;
-    private static final ModConfigSpec.DoubleValue PULSE_STRENGTH;
-    private static final ModConfigSpec.IntValue PULSE_COOLDOWN;
-    private static final ModConfigSpec.BooleanValue PULSE_WIND_BURST;
+    private static final ForgeConfigSpec.BooleanValue PULSE_ENABLED;
+    private static final ForgeConfigSpec.DoubleValue PULSE_RANGE;
+    private static final ForgeConfigSpec.DoubleValue PULSE_STRENGTH;
+    private static final ForgeConfigSpec.IntValue PULSE_COOLDOWN;
+    private static final ForgeConfigSpec.BooleanValue PULSE_WIND_BURST;
 
     static {
         BUILDER.translation(key("vacuum")).push("vacuum");
@@ -116,7 +116,7 @@ public final class Config {
         BUILDER.pop();
     }
 
-    public static final ModConfigSpec SPEC = BUILDER.build();
+    public static final ForgeConfigSpec SPEC = BUILDER.build();
 
     private Config() {
     }
@@ -125,7 +125,7 @@ public final class Config {
         return Vacpack.MOD_ID + ".configuration." + name;
     }
 
-    private static <T> T get(ModConfigSpec.ConfigValue<T> value) {
+    private static <T> T get(ForgeConfigSpec.ConfigValue<T> value) {
         return SPEC.isLoaded() ? value.get() : value.getDefault();
     }
 

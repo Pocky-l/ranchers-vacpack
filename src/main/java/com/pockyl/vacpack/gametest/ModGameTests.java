@@ -5,7 +5,6 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -17,13 +16,12 @@ import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.Vacpack;
@@ -54,7 +52,7 @@ public final class ModGameTests {
     public static void vacpackRecipeIsLoaded(GameTestHelper helper) {
         var recipe = helper.getLevel().getRecipeManager().byKey(Vacpack.id("vacpack"));
         helper.assertTrue(recipe.isPresent(), "the vacpack crafting recipe is loaded");
-        helper.assertTrue(recipe.get().value().getResultItem(helper.getLevel().registryAccess()).is(ModItems.VACPACK.get()),
+        helper.assertTrue(recipe.get().getResultItem(helper.getLevel().registryAccess()).is(ModItems.VACPACK.get()),
                 "the recipe crafts a vacpack");
         helper.succeed();
     }
@@ -96,7 +94,7 @@ public final class ModGameTests {
 
         VacuumHandler.vacuumTick(player, vacpack);
 
-        VacTank tank = vacpack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY);
+        VacTank tank = ModDataComponents.getTank(vacpack);
         helper.assertTrue(tank.slot(0).item().is(Items.SLIME_BALL) && tank.slot(0).count() == 7, "slime balls are stored");
         helper.assertTrue(item.isRemoved(), "the item entity is consumed");
         helper.succeed();
@@ -136,7 +134,7 @@ public final class ModGameTests {
 
         VacuumHandler.vacuumTick(player, vacpack);
 
-        VacTank tank = vacpack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY);
+        VacTank tank = ModDataComponents.getTank(vacpack);
         helper.assertTrue(small.isRemoved(), "a small slime is captured");
         helper.assertTrue(!big.isRemoved(), "a big slime is too large");
         helper.assertTrue(tank.slot(0).matchesMob(EntityType.SLIME) && tank.slot(0).amount() == 1, "the slime is stored");
@@ -157,13 +155,13 @@ public final class ModGameTests {
         AABB area = new AABB(player.blockPosition()).inflate(4);
         var shots = helper.getLevel().getEntitiesOfClass(TankShot.class, area, TankShot::carriesMob);
         helper.assertTrue(shots.size() == 1, "the slime flies as a projectile");
-        helper.assertTrue(vacpack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY).isEmpty(), "the tank is empty again");
+        helper.assertTrue(ModDataComponents.getTank(vacpack).isEmpty(), "the tank is empty again");
 
-        TankShot shot = shots.getFirst();
+        TankShot shot = shots.get(0);
         shot.release(shot.position(), Vec3.ZERO, false);
         var released = helper.getLevel().getEntitiesOfClass(Slime.class, area, Slime::isAlive);
         helper.assertTrue(released.size() == 1, "exactly one slime lands");
-        helper.assertTrue("Pinky".equals(released.getFirst().getCustomName().getString()), "the slime keeps its name");
+        helper.assertTrue("Pinky".equals(released.get(0).getCustomName().getString()), "the slime keeps its name");
         helper.assertTrue(shot.isRemoved(), "the projectile is gone");
         released.forEach(Slime::discard);
         helper.succeed();
@@ -196,7 +194,7 @@ public final class ModGameTests {
         AABB area = new AABB(helper.absolutePos(new BlockPos(0, 2, 0))).inflate(10);
         var released = helper.getLevel().getEntitiesOfClass(Chicken.class, area, Chicken::isAlive);
         helper.assertTrue(released.size() == 1, "the chicken stands up where the ragdoll stopped");
-        helper.assertTrue(released.getFirst().getX() > start.x + 0.5, "it slid forward with its momentum");
+        helper.assertTrue(released.get(0).getX() > start.x + 0.5, "it slid forward with its momentum");
         released.forEach(Chicken::discard);
         helper.succeed();
     }
@@ -215,7 +213,7 @@ public final class ModGameTests {
 
         var released = helper.getLevel().getEntitiesOfClass(Chicken.class, new AABB(pos, pos).inflate(2), Chicken::isAlive);
         helper.assertTrue(released.size() == 1, "the chicken is released");
-        Chicken bird = released.getFirst();
+        Chicken bird = released.get(0);
         helper.assertTrue(bird.getDeltaMovement().x > 0.8, "the chicken keeps its momentum");
         float health = bird.getHealth();
         bird.hurt(helper.getLevel().damageSources().generic(), 2.0F);
@@ -232,7 +230,7 @@ public final class ModGameTests {
         ItemStack vacpack = player.getMainHandItem();
         Vec3 ahead = player.getEyePosition().add(player.getLookAngle().scale(5));
         Slime big = spawnSlime(helper, ahead, 4);
-        VacuumState state = player.getData(ModAttachments.VACUUM_STATE);
+        VacuumState state = ModAttachments.getData(player, ModAttachments.VACUUM_STATE);
 
         VacuumHandler.holdTick(player, vacpack, state);
 
@@ -263,7 +261,7 @@ public final class ModGameTests {
 
         Vec3 motion = item.getDeltaMovement();
         helper.assertTrue(motion.dot(nozzle.subtract(start)) > 0, "the item moves towards the nozzle");
-        helper.assertTrue(motion.y >= item.getGravity() - 1.0E-6 || motion.y > 0, "gravity is cancelled so the item floats");
+        helper.assertTrue(motion.y >= VacuumHandler.gravity(item) - 1.0E-6 || motion.y > 0, "gravity is cancelled so the item floats");
         item.discard();
         helper.succeed();
     }
@@ -284,19 +282,14 @@ public final class ModGameTests {
         AABB area = new AABB(player.blockPosition()).inflate(8);
         var ragdolls = helper.getLevel().getEntitiesOfClass(TankShot.class, area, TankShot::carriesMob);
         helper.assertTrue(ragdolls.size() == 1, "exactly one ragdoll flies");
-        helper.assertTrue(ragdolls.getFirst().getDeltaMovement().dot(player.getLookAngle()) > 0.5, "the ragdoll is blown away");
+        helper.assertTrue(ragdolls.get(0).getDeltaMovement().dot(player.getLookAngle()) > 0.5, "the ragdoll is blown away");
         ragdolls.forEach(TankShot::discard);
         helper.succeed();
     }
 
     @GameTest(template = "empty")
-    @SuppressWarnings("removal")
     public static void pulseAtTheFloorBurstsLikeAWindCharge(GameTestHelper helper) {
-        // The explosion only affects entities that are in the level, so this test needs a real (mock) server player.
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        Vec3 pos = helper.absoluteVec(new Vec3(0.5, 4.0, 0.5));
-        player.moveTo(pos.x, pos.y, pos.z, -90.0F, 0.0F);
-        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.VACPACK.get()));
+        Player player = player(helper);
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
                 helper.setBlock(x, 3, z, Blocks.STONE);
@@ -305,12 +298,12 @@ public final class ModGameTests {
         player.setXRot(90.0F);
         player.setDeltaMovement(Vec3.ZERO);
 
-        // Burst only: the full pulse also triggers a GeckoLib animation packet, which the mock connection cannot send.
+        // Only the burst is under test; the rest of the pulse wave has its own test.
         VacuumHandler.windBurst(player, player.getEyePosition(), player.getLookAngle());
 
         helper.assertTrue(player.getDeltaMovement().y > 0.3, "the wind burst launches the player upwards");
-        helper.assertTrue(player.isIgnoringFallDamageFromCurrentImpulse(), "like a wind charge, the jump protects from fall damage");
-        player.discard();
+        helper.assertTrue(!player.causeFallDamage(12.0F, 1.0F, helper.getLevel().damageSources().fall()),
+                "like a wind charge, the jump protects from fall damage");
         helper.succeed();
     }
 
@@ -357,6 +350,7 @@ public final class ModGameTests {
         helper.getLevel().getEntitiesOfClass(ItemEntity.class, area, e -> true).forEach(ItemEntity::discard);
         helper.succeed();
     }
+
     @GameTest(template = "empty")
     public static void creativeVacpackTakesBigMobsAndBottomlessStacks(GameTestHelper helper) {
         Player player = player(helper, new ItemStack(ModItems.CREATIVE_VACPACK.get()));
@@ -373,7 +367,7 @@ public final class ModGameTests {
 
         VacuumHandler.vacuumTick(player, vacpack);
 
-        VacTank tank = vacpack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY);
+        VacTank tank = ModDataComponents.getTank(vacpack);
         helper.assertTrue(adult.isRemoved(), "the creative vacpack takes an adult cow");
         helper.assertTrue(big.isRemoved(), "the creative vacpack takes a big slime");
         helper.assertTrue(item.isRemoved() && tank.slot(0).count() == 300, "300 slime balls fit into one creative slot");
@@ -390,12 +384,12 @@ public final class ModGameTests {
     }
 
     private static int shotsInTwoTicks(GameTestHelper helper, ItemStack vacpack) {
-        vacpack.set(ModDataComponents.TANK, VacTank.EMPTY.insertItem(new ItemStack(Items.SNOWBALL, 5), 4, 64).tank());
+        ModDataComponents.setTank(vacpack, VacTank.EMPTY.insertItem(new ItemStack(Items.SNOWBALL, 5), 4, 64).tank());
         Player player = player(helper, vacpack);
         VacuumHandler.setInput(player, false, true);
         VacuumHandler.tick(player);
         VacuumHandler.tick(player);
-        int left = player.getMainHandItem().getOrDefault(ModDataComponents.TANK, VacTank.EMPTY).slot(0).count();
+        int left = ModDataComponents.getTank(player.getMainHandItem()).slot(0).count();
         helper.getLevel().getEntitiesOfClass(TankShot.class, new AABB(player.blockPosition()).inflate(8)).forEach(TankShot::discard);
         return 5 - left;
     }
@@ -405,7 +399,7 @@ public final class ModGameTests {
     }
 
     private static Player player(GameTestHelper helper, ItemStack vacpack) {
-        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        Player player = helper.makeMockSurvivalPlayer();
         Vec3 pos = helper.absoluteVec(new Vec3(0.5, 4.0, 0.5));
         player.moveTo(pos.x, pos.y, pos.z, -90.0F, 0.0F);
         player.setItemInHand(InteractionHand.MAIN_HAND, vacpack);

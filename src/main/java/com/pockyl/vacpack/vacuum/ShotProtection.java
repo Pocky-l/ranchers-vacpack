@@ -18,7 +18,7 @@ public final class ShotProtection {
     /** While airborne this long after release, position is synced every tick so the flight stays smooth on clients. */
     private static final int SMOOTH_SYNC_TICKS = 40;
     /** A fall guard that was never used expires after this long. */
-    private static final int FALL_GUARD_TICKS = 200;
+    public static final int FALL_GUARD_TICKS = 200;
 
     /** Server-thread only. Weak, so unloaded or removed entities never leak. */
     private static final Set<LivingEntity> TRACKED = Collections.newSetFromMap(new WeakHashMap<>());
@@ -31,17 +31,18 @@ public final class ShotProtection {
     }
 
     public static boolean isInvulnerable(LivingEntity entity) {
-        Shot shot = entity.getExistingDataOrNull(ModAttachments.SHOT);
+        Shot shot = ModAttachments.getExistingDataOrNull(entity, ModAttachments.SHOT);
         return shot != null && shot.age(entity.level().getGameTime()) <= INVULNERABLE_TICKS;
     }
 
     /** Returns whether a pending fall guard was used up by this landing. */
     public static boolean consumeFallGuard(LivingEntity entity) {
-        if (entity.getExistingDataOrNull(ModAttachments.FALL_GUARD) == null) {
+        Long until = ModAttachments.getExistingDataOrNull(entity, ModAttachments.FALL_GUARD);
+        if (until == null) {
             return false;
         }
-        entity.removeData(ModAttachments.FALL_GUARD);
-        return true;
+        ModAttachments.removeData(entity, ModAttachments.FALL_GUARD);
+        return entity.level().getGameTime() <= until;
     }
 
     /** Called once per server tick. */
@@ -49,7 +50,7 @@ public final class ShotProtection {
         Iterator<LivingEntity> iterator = TRACKED.iterator();
         while (iterator.hasNext()) {
             LivingEntity entity = iterator.next();
-            Shot shot = entity.getExistingDataOrNull(ModAttachments.SHOT);
+            Shot shot = ModAttachments.getExistingDataOrNull(entity, ModAttachments.SHOT);
             if (entity.isRemoved() || shot == null) {
                 iterator.remove();
                 continue;
@@ -59,8 +60,8 @@ public final class ShotProtection {
                 entity.hasImpulse = true;
             }
             if (age > FALL_GUARD_TICKS) {
-                entity.removeData(ModAttachments.FALL_GUARD);
-                entity.removeData(ModAttachments.SHOT);
+                ModAttachments.removeData(entity, ModAttachments.FALL_GUARD);
+                ModAttachments.removeData(entity, ModAttachments.SHOT);
                 iterator.remove();
             }
         }

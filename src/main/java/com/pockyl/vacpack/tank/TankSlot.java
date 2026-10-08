@@ -1,15 +1,14 @@
 package com.pockyl.vacpack.tank;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -21,18 +20,6 @@ import java.util.Optional;
  */
 public record TankSlot(ItemStack item, int count, List<CompoundTag> mobs) {
     public static final TankSlot EMPTY = new TankSlot(ItemStack.EMPTY, 0, List.of());
-
-    public static final Codec<TankSlot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            ItemStack.OPTIONAL_CODEC.optionalFieldOf("item", ItemStack.EMPTY).forGetter(TankSlot::item),
-            Codec.INT.optionalFieldOf("count", 0).forGetter(TankSlot::count),
-            CompoundTag.CODEC.listOf().optionalFieldOf("mobs", List.of()).forGetter(TankSlot::mobs)
-    ).apply(instance, TankSlot::new));
-
-    public static final StreamCodec<RegistryFriendlyByteBuf, TankSlot> STREAM_CODEC = StreamCodec.composite(
-            ItemStack.OPTIONAL_STREAM_CODEC, TankSlot::item,
-            ByteBufCodecs.VAR_INT, TankSlot::count,
-            ByteBufCodecs.COMPOUND_TAG.apply(ByteBufCodecs.list()), TankSlot::mobs,
-            TankSlot::new);
 
     public TankSlot {
         item = item.isEmpty() ? ItemStack.EMPTY : item.copyWithCount(1);
@@ -48,6 +35,30 @@ public record TankSlot(ItemStack item, int count, List<CompoundTag> mobs) {
 
     public static TankSlot ofMobs(List<CompoundTag> mobs) {
         return new TankSlot(ItemStack.EMPTY, 0, mobs);
+    }
+
+    public static TankSlot load(CompoundTag tag) {
+        ItemStack item = tag.contains("item", Tag.TAG_COMPOUND) ? ItemStack.of(tag.getCompound("item")) : ItemStack.EMPTY;
+        List<CompoundTag> mobs = new ArrayList<>();
+        ListTag list = tag.getList("mobs", Tag.TAG_COMPOUND);
+        for (int i = 0; i < list.size(); i++) {
+            mobs.add(list.getCompound(i));
+        }
+        return new TankSlot(item, tag.getInt("count"), mobs);
+    }
+
+    public CompoundTag save() {
+        CompoundTag tag = new CompoundTag();
+        if (!item.isEmpty()) {
+            tag.put("item", item.save(new CompoundTag()));
+            tag.putInt("count", count);
+        }
+        if (!mobs.isEmpty()) {
+            ListTag list = new ListTag();
+            mobs.forEach(mob -> list.add(mob.copy()));
+            tag.put("mobs", list);
+        }
+        return tag;
     }
 
     public boolean isEmpty() {
@@ -67,18 +78,23 @@ public record TankSlot(ItemStack item, int count, List<CompoundTag> mobs) {
     }
 
     public Optional<EntityType<?>> mobType() {
-        return holdsMobs() ? EntityType.by(mobs.getFirst()) : Optional.empty();
+        return holdsMobs() ? EntityType.by(mobs.get(0)) : Optional.empty();
+    }
+
+    /** The mob that would be shot next (the most recently captured one). */
+    public CompoundTag lastMob() {
+        return mobs.get(mobs.size() - 1);
     }
 
     public boolean matchesItem(ItemStack stack) {
-        return holdsItems() && ItemStack.isSameItemSameComponents(item, stack);
+        return holdsItems() && ItemStack.isSameItemSameTags(item, stack);
     }
 
     public boolean matchesMob(EntityType<?> type) {
         return mobType().map(t -> t == type).orElse(false);
     }
 
-    // ItemStack has identity equality, but data components must compare by value.
+    // ItemStack has identity equality, but tank contents must compare by value.
     @Override
     public boolean equals(Object o) {
         return o instanceof TankSlot other
@@ -89,6 +105,7 @@ public record TankSlot(ItemStack item, int count, List<CompoundTag> mobs) {
 
     @Override
     public int hashCode() {
-        return 31 * (31 * ItemStack.hashItemAndComponents(item) + count) + mobs.hashCode();
+        int itemHash = item.isEmpty() ? 0 : 31 * item.getItem().hashCode() + Objects.hashCode(item.getTag());
+        return 31 * (31 * itemHash + count) + mobs.hashCode();
     }
 }

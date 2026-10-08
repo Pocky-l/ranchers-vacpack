@@ -1,25 +1,28 @@
 package com.pockyl.vacpack.item;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.animatable.client.GeoRenderProvider;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import com.pockyl.vacpack.Config;
@@ -117,7 +120,7 @@ public final class VacpackItem extends Item implements GeoItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         VacTank tank = tank(stack);
         if (creative) {
             tooltip.add(Component.translatable("tooltip.vacpack.creative").withStyle(ChatFormatting.LIGHT_PURPLE));
@@ -144,7 +147,7 @@ public final class VacpackItem extends Item implements GeoItem {
     }
 
     private static VacTank tank(ItemStack stack) {
-        return stack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY);
+        return ModDataComponents.getTank(stack);
     }
 
     @Override
@@ -165,18 +168,24 @@ public final class VacpackItem extends Item implements GeoItem {
         return cache;
     }
 
-    // GeckoLib only invokes this on the client, so the renderer class is never loaded on a dedicated server.
+    // Forge only invokes this on the client, so the renderer class is never loaded on a dedicated server.
+    // GeckoLib renders the model; the arm pose makes players aim the vacpack with both arms like a gun.
     @Override
-    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
-        consumer.accept(new GeoRenderProvider() {
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        consumer.accept(new IClientItemExtensions() {
             private VacpackRenderer renderer;
 
             @Override
-            public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
+            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 if (renderer == null) {
                     renderer = new VacpackRenderer(creative);
                 }
                 return renderer;
+            }
+
+            @Override
+            public HumanoidModel.ArmPose getArmPose(LivingEntity entity, InteractionHand hand, ItemStack stack) {
+                return HumanoidModel.ArmPose.CROSSBOW_HOLD;
             }
         });
     }

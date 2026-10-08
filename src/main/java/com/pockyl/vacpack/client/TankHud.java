@@ -1,16 +1,16 @@
 package com.pockyl.vacpack.client;
 
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpawnEggItem;
+import net.minecraftforge.client.gui.overlay.ForgeGui;
+import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
 import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.item.VacpackItem;
@@ -19,7 +19,7 @@ import com.pockyl.vacpack.tank.TankSlot;
 import com.pockyl.vacpack.tank.VacTank;
 
 /** Tank slots drawn next to the hotbar while a vacpack is held. */
-public final class TankHud implements LayeredDraw.Layer {
+public final class TankHud implements IGuiOverlay {
     private static final int SLOT_SIZE = 20;
     private static final int GAP_TO_HOTBAR = 10;
     private static final int SLOT_BACKGROUND = 0x90000000;
@@ -32,7 +32,7 @@ public final class TankHud implements LayeredDraw.Layer {
     private static final int GAUGE_FULL = 0xFFFFD86F;
 
     @Override
-    public void render(GuiGraphics graphics, DeltaTracker deltaTracker) {
+    public void render(ForgeGui gui, GuiGraphics graphics, float partialTick, int screenWidth, int screenHeight) {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         if (player == null || minecraft.options.hideGui || player.isSpectator()) {
@@ -43,14 +43,14 @@ public final class TankHud implements LayeredDraw.Layer {
             return;
         }
 
-        VacTank tank = stack.getOrDefault(ModDataComponents.TANK, VacTank.EMPTY);
+        VacTank tank = ModDataComponents.getTank(stack);
         int slots = Config.slotCount();
         int width = slots * SLOT_SIZE;
-        int center = graphics.guiWidth() / 2;
+        int center = screenWidth / 2;
         // Stay clear of the offhand slot, which sits on the side opposite to the main arm.
         boolean rightSide = player.getMainArm() == HumanoidArm.RIGHT;
         int x0 = rightSide ? center + 91 + GAP_TO_HOTBAR : center - 91 - GAP_TO_HOTBAR - width;
-        int y = graphics.guiHeight() - SLOT_SIZE - 1;
+        int y = screenHeight - SLOT_SIZE - 1;
         Font font = minecraft.font;
 
         for (int i = 0; i < slots; i++) {
@@ -62,8 +62,8 @@ public final class TankHud implements LayeredDraw.Layer {
                 continue;
             }
             // Mobs are shown as small 3D models (the one that would be shot next); items and unknown mobs as icons.
-            boolean drawnAsModel = slot.holdsMobs() && MobIcons.render(graphics, slot.mobs().getLast(), x + 1, y + 1,
-                    SLOT_SIZE - 3, deltaTracker.getGameTimeDeltaPartialTick(false));
+            boolean drawnAsModel = slot.holdsMobs() && MobIcons.render(graphics, slot.lastMob(), x + 1, y + 1,
+                    SLOT_SIZE - 3, partialTick);
             if (!drawnAsModel) {
                 graphics.renderItem(icon(slot), x + 1, y + 1);
             }

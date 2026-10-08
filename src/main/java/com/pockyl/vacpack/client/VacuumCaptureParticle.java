@@ -14,7 +14,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import com.pockyl.vacpack.vacuum.VacuumHandler;
@@ -71,7 +70,7 @@ public final class VacuumCaptureParticle extends Particle {
 
     // Always render: the animation is short and computing exact bounds is not worth it.
     @Override
-    public AABB getRenderBoundingBox(float partialTicks) {
-        return AABB.INFINITE;
+    public boolean shouldCull() {
+        return false;
     }
 }

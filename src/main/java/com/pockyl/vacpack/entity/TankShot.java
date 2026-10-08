@@ -1,6 +1,7 @@
 package com.pockyl.vacpack.entity;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -23,12 +24,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import com.pockyl.vacpack.Config;
 import com.pockyl.vacpack.Vacpack;
+import com.pockyl.vacpack.network.ModNetwork;
 import com.pockyl.vacpack.network.ShotLandedPayload;
 import com.pockyl.vacpack.registry.ModAttachments;
 import com.pockyl.vacpack.registry.ModEntities;
@@ -98,9 +99,9 @@ public final class TankShot extends Projectile {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        builder.define(ITEM, ItemStack.EMPTY);
-        builder.define(MOB, new CompoundTag());
+    protected void defineSynchedData() {
+        entityData.define(ITEM, ItemStack.EMPTY);
+        entityData.define(MOB, new CompoundTag());
     }
 
     @Override
@@ -120,7 +121,7 @@ public final class TankShot extends Projectile {
         return EntityType.by(getMob())
                 .map(type -> {
                     EntityDimensions mob = type.getDimensions();
-                    float size = Mth.clamp((mob.width() + mob.height()) / 2, 0.3F, 0.9F);
+                    float size = Mth.clamp((mob.width + mob.height) / 2, 0.3F, 0.9F);
                     return EntityDimensions.scalable(size, size);
                 })
                 .orElse(super.getDimensions(pose));
@@ -245,12 +246,12 @@ public final class TankShot extends Projectile {
     // Differences explained by that delay are ignored, real divergence is blended in over several ticks, and only a
     // large one snaps.
     @Override
-    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, boolean teleport) {
         Vec3 offset = new Vec3(x, y, z).subtract(position());
         double tolerance = 0.3 + getDeltaMovement().length() * 3.0;
         if (offset.length() > 4.0) {
             correction = Vec3.ZERO;
-            super.lerpTo(x, y, z, yRot, xRot, steps);
+            super.lerpTo(x, y, z, yRot, xRot, steps, teleport);
         } else if (offset.length() > tolerance) {
             correction = offset;
         }
@@ -438,19 +439,19 @@ public final class TankShot extends Projectile {
                 }
                 mob.hasImpulse = true;
                 mob.hurtMarked = true;
-                mob.setData(ModAttachments.SHOT, shot);
-                mob.setData(ModAttachments.FALL_GUARD, true);
+                ModAttachments.setData(mob, ModAttachments.SHOT, shot);
+                ModAttachments.setData(mob, ModAttachments.FALL_GUARD, level.getGameTime() + ShotProtection.FALL_GUARD_TICKS);
                 if (mob instanceof LivingEntity living) {
                     ShotProtection.track(living);
                 }
                 level.addFreshEntity(mob);
                 // Lets clients ease the mob out of its ragdoll pose instead of snapping upright.
-                PacketDistributor.sendToPlayersTrackingEntity(this, new ShotLandedPayload(getId(), mob.getId()));
+                ModNetwork.sendToPlayersTrackingEntity(this, new ShotLandedPayload(getId(), mob.getId()));
             }
         } else if (!getItem().isEmpty()) {
             ItemEntity item = new ItemEntity(level, pos.x, pos.y - 0.125, pos.z, getItem(), velocity.x, velocity.y, velocity.z);
             item.setPickUpDelay(10);
-            item.setData(ModAttachments.SHOT, shot);
+            ModAttachments.setData(item, ModAttachments.SHOT, shot);
             level.addFreshEntity(item);
         }
         level.sendParticles(ModParticles.SHOT_PUFF.get(), pos.x, pos.y, pos.z, 2, 0.15, 0.1, 0.15, 0.01);
@@ -472,7 +473,7 @@ public final class TankShot extends Projectile {
     protected void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         if (!getItem().isEmpty()) {
-            tag.put("Item", getItem().save(registryAccess()));
+            tag.put("Item", getItem().save(new CompoundTag()));
         }
         if (carriesMob()) {
             tag.put("Mob", getMob());
@@ -482,7 +483,7 @@ public final class TankShot extends Projectile {
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        entityData.set(ITEM, ItemStack.parseOptional(registryAccess(), tag.getCompound("Item")));
+        entityData.set(ITEM, tag.contains("Item", Tag.TAG_COMPOUND) ? ItemStack.of(tag.getCompound("Item")) : ItemStack.EMPTY);
         entityData.set(MOB, tag.getCompound("Mob"));
     }
 }
