@@ -86,7 +86,7 @@ public final class ClientVacuumEffects {
     /** Spin-up/down: centred for our own vacpack (see {@link VacuumSoundInstance}), positional for other players. */
     private static void playMotorSound(Minecraft minecraft, Player player, SoundEvent sound, float volume) {
         boolean own = player == minecraft.player;
-        minecraft.getSoundManager().play(new SimpleSoundInstance(sound.getLocation(), SoundSource.PLAYERS, volume, 1.0F,
+        minecraft.getSoundManager().play(new SimpleSoundInstance(sound.location(), SoundSource.PLAYERS, volume, 1.0F,
                 player.getRandom(), false, 0, own ? SoundInstance.Attenuation.NONE : SoundInstance.Attenuation.LINEAR,
                 own ? 0 : player.getX(), own ? 0 : player.getEyeY(), own ? 0 : player.getZ(), own));
     }
@@ -124,7 +124,7 @@ public final class ClientVacuumEffects {
      * ring around the entity, move with it and are then drawn past it into the nozzle.
      */
     private static void spawnWindAroundEntities(ClientLevel level, Player player, double range, Vec3 look) {
-        RandomSource random = level.random;
+        RandomSource random = level.getRandom();
         Minecraft minecraft = Minecraft.getInstance();
         Vec3 eye = player.getEyePosition();
         double minDot = Math.cos(Math.toRadians(Config.coneAngle()));
@@ -172,7 +172,7 @@ public final class ClientVacuumEffects {
         if (wispSprites == null || dotSprites == null) {
             return;
         }
-        RandomSource random = level.random;
+        RandomSource random = level.getRandom();
         Minecraft minecraft = Minecraft.getInstance();
         double range = Config.range();
         double far = range * 0.85;

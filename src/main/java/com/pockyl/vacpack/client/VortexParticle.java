@@ -4,9 +4,8 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
-import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
@@ -21,7 +20,7 @@ import com.pockyl.vacpack.vacuum.VacuumHandler;
  * swallowed when it reaches the nozzle. When the player lets go, the forces stop: the particle coasts on its momentum,
  * slows down in the air, drifts and fades out. Rendered full-bright so the airflow glows at night.
  */
-public final class VortexParticle extends TextureSheetParticle {
+public final class VortexParticle extends SingleQuadParticle {
     /** Visual flavour; physics are the same for all. */
     public enum Style {
         /** Pixel air wisp. */
@@ -62,8 +61,8 @@ public final class VortexParticle extends TextureSheetParticle {
     private float swallowFade = 1.0F;
 
     public VortexParticle(ClientLevel level, Player player, SpriteSet sprites, Style style, Vec3 pos, Vec3 velocity, double range) {
-        super(level, pos.x, pos.y, pos.z);
-        RandomSource random = level.random;
+        super(level, pos.x, pos.y, pos.z, sprites.get(level.getRandom()));
+        RandomSource random = level.getRandom();
         this.player = player;
         this.range = range;
         this.xd = velocity.x;
@@ -98,7 +97,6 @@ public final class VortexParticle extends TextureSheetParticle {
             setColor(shade * 0.72F, shade * 0.92F, shade);
         }
         setAlpha(0);
-        pickSprite(sprites);
         this.airSprite = sprite;
         this.airRed = rCol;
         this.airGreen = gCol;
@@ -205,12 +203,12 @@ public final class VortexParticle extends TextureSheetParticle {
     }
 
     @Override
-    protected int getLightColor(float partialTick) {
+    protected int getLightCoords(float partialTick) {
         return FULL_BRIGHT;
     }
 
     @Override
-    public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+    protected Layer getLayer() {
+        return Layer.TRANSLUCENT;
     }
 }

@@ -1,7 +1,7 @@
 package com.pockyl.vacpack.client;
 
-import software.bernie.geckolib.model.DefaultedItemGeoModel;
-import software.bernie.geckolib.renderer.GeoItemRenderer;
+import com.geckolib.model.DefaultedItemGeoModel;
+import com.geckolib.renderer.GeoItemRenderer;
 
 import com.pockyl.vacpack.Vacpack;
 import com.pockyl.vacpack.item.VacpackItem;

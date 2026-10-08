@@ -10,6 +10,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleGroupsEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
@@ -30,6 +31,7 @@ public final class VacpackClient {
         modBus.addListener(ModKeyMappings::register);
         modBus.addListener(VacpackClient::registerGuiLayers);
         modBus.addListener(VacpackClient::registerParticles);
+        modBus.addListener(VacpackClient::registerParticleGroups);
         modBus.addListener(VacpackClient::registerRenderers);
         modBus.addListener(VacpackClient::registerClientExtensions);
     }
@@ -54,6 +56,10 @@ public final class VacpackClient {
         event.registerSpriteSet(ModParticles.CAPTURE_RING.get(), BurstParticle.CaptureRing::new);
         event.registerSpriteSet(ModParticles.PULSE_RING.get(), BurstParticle.PulseRing::new);
         event.registerSpriteSet(ModParticles.SHOT_PUFF.get(), BurstParticle.ShotPuff::new);
+    }
+
+    private static void registerParticleGroups(RegisterParticleGroupsEvent event) {
+        event.register(VacuumCaptureParticle.GROUP, VacuumCaptureParticle.Group::new);
     }
 
     // Rendering itself is handled by GeckoLib; this only makes players aim the vacpack with both arms like a gun.

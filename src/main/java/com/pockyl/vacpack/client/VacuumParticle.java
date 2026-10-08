@@ -3,19 +3,19 @@ package com.pockyl.vacpack.client;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
-import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
-import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.util.RandomSource;
 
 /** Air wisp flying into the nozzle at constant speed; spawners set its velocity to arrive in {@link #LIFETIME} ticks. */
-public final class VacuumParticle extends TextureSheetParticle {
+public final class VacuumParticle extends SingleQuadParticle {
     public static final int LIFETIME = 8;
 
     private final float spin;
 
     private VacuumParticle(ClientLevel level, double x, double y, double z, double xd, double yd, double zd, SpriteSet sprites) {
-        super(level, x, y, z);
+        super(level, x, y, z, sprites.get(level.getRandom()));
         this.xd = xd;
         this.yd = yd;
         this.zd = zd;
@@ -30,7 +30,6 @@ public final class VacuumParticle extends TextureSheetParticle {
         float shade = 0.85F + random.nextFloat() * 0.15F;
         setColor(shade * 0.82F, shade * 0.95F, shade);
         setAlpha(0.0F);
-        pickSprite(sprites);
     }
 
     @Override
@@ -44,14 +43,14 @@ public final class VacuumParticle extends TextureSheetParticle {
     }
 
     @Override
-    public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+    protected Layer getLayer() {
+        return Layer.TRANSLUCENT;
     }
 
     public record Provider(SpriteSet sprites) implements ParticleProvider<SimpleParticleType> {
         @Override
         public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z,
-                                       double xd, double yd, double zd) {
+                                       double xd, double yd, double zd, RandomSource random) {
             return new VacuumParticle(level, x, y, z, xd, yd, zd, sprites);
         }
     }

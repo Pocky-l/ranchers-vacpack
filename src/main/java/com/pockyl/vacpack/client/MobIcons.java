@@ -2,13 +2,14 @@ package com.pockyl.vacpack.client;
 
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+
+import com.pockyl.vacpack.tank.MobData;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,7 +32,7 @@ public final class MobIcons {
      *
      * @return false if no model could be created (unknown or non-living entity), so the caller can draw a fallback
      */
-    public static boolean render(GuiGraphics graphics, CompoundTag mob, int x, int y, int size, float partialTick) {
+    public static boolean render(GuiGraphicsExtractor graphics, CompoundTag mob, int x, int y, int size, float partialTick) {
         LivingEntity entity = entity(mob);
         if (entity == null) {
             return false;
@@ -42,9 +43,12 @@ public final class MobIcons {
         Quaternionf pose = Axis.ZP.rotation((float) Math.PI)
                 .mul(Axis.XP.rotationDegrees(-12.0F))
                 .mul(Axis.YP.rotationDegrees(time * 2.0F));
+        EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity)
+                .createRenderState(entity, partialTick);
+        state.shadowPieces.clear();
+        state.outlineColor = 0;
         graphics.enableScissor(x, y, x + size, y + size);
-        InventoryScreen.renderEntityInInventory(graphics, x + size / 2.0F, y + size / 2.0F, scale,
-                new Vector3f(0, entity.getBbHeight() / 2.0F, 0), pose, null, entity);
+        graphics.entity(state, scale, new Vector3f(0, entity.getBbHeight() / 2.0F, 0), pose, null, x, y, x + size, y + size);
         graphics.disableScissor();
         return true;
     }
@@ -54,7 +58,7 @@ public final class MobIcons {
         if (minecraft.level == null) {
             return null;
         }
-        return CACHE.computeIfAbsent(mob, tag -> EntityType.create(tag, minecraft.level)
+        return CACHE.computeIfAbsent(mob, tag -> MobData.create(tag, minecraft.level)
                 .filter(LivingEntity.class::isInstance)
                 .map(LivingEntity.class::cast)
                 .map(entity -> {

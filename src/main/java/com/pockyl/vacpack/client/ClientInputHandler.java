@@ -9,7 +9,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import com.pockyl.vacpack.Vacpack;
 import com.pockyl.vacpack.item.VacpackItem;
@@ -57,18 +57,18 @@ public final class ClientInputHandler {
             return;
         }
 
-        boolean active = minecraft.screen == null && holdsVacpack(player) && !player.isSpectator();
+        boolean active = minecraft.gui.screen() == null && holdsVacpack(player) && !player.isSpectator();
         boolean vacuum = active && minecraft.options.keyUse.isDown();
         boolean shoot = active && minecraft.options.keyAttack.isDown();
         if (vacuum != sentVacuum || shoot != sentShoot) {
             sentVacuum = vacuum;
             sentShoot = shoot;
-            PacketDistributor.sendToServer(new VacpackInputPayload(vacuum, shoot));
+            ClientPacketDistributor.sendToServer(new VacpackInputPayload(vacuum, shoot));
         }
 
         while (ModKeyMappings.CYCLE_SLOT.consumeClick()) {
             if (active) {
-                PacketDistributor.sendToServer(new CycleSlotPayload(1));
+                ClientPacketDistributor.sendToServer(new CycleSlotPayload(1));
             }
         }
     }
@@ -77,10 +77,10 @@ public final class ClientInputHandler {
     public static void onScroll(InputEvent.MouseScrollingEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
-        if (player != null && minecraft.screen == null && player.isShiftKeyDown() && holdsVacpack(player)
+        if (player != null && minecraft.gui.screen() == null && player.isShiftKeyDown() && holdsVacpack(player)
                 && event.getScrollDeltaY() != 0) {
             event.setCanceled(true);
-            PacketDistributor.sendToServer(new CycleSlotPayload(event.getScrollDeltaY() > 0 ? -1 : 1));
+            ClientPacketDistributor.sendToServer(new CycleSlotPayload(event.getScrollDeltaY() > 0 ? -1 : 1));
         }
     }
 }

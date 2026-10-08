@@ -2,15 +2,18 @@ package com.pockyl.vacpack.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemDisplayContext;
+import org.joml.Quaternionf;
+import org.jspecify.annotations.Nullable;
 
 import com.pockyl.vacpack.entity.TankShot;
 
@@ -18,41 +21,64 @@ import com.pockyl.vacpack.entity.TankShot;
  * Draws the carried mob or item with the tumbling rigid-body orientation computed by {@link TankShot}; the mob's head
  * and limbs are animated by the ragdoll as well.
  */
-public final class TankShotRenderer extends EntityRenderer<TankShot> {
-    private final ItemRenderer itemRenderer;
+public final class TankShotRenderer extends EntityRenderer<TankShot, TankShotRenderer.State> {
+    private final ItemModelResolver itemModelResolver;
 
     public TankShotRenderer(EntityRendererProvider.Context context) {
         super(context);
-        this.itemRenderer = context.getItemRenderer();
+        this.itemModelResolver = context.getItemModelResolver();
         this.shadowRadius = 0.0F;
     }
 
     @Override
-    public void render(TankShot shot, float entityYaw, float partialTick, PoseStack pose, MultiBufferSource buffers, int light) {
-        Entity mob = shot.getDisplayMob();
-        pose.pushPose();
-        pose.translate(0, shot.getBbHeight() / 2, 0);
-        if (mob != null) {
-            float half = mob.getBbHeight() / 2;
-            pose.mulPose(Axis.YP.rotationDegrees(-entityYaw));
-            pose.mulPose(shot.getOrientation(partialTick));
-            pose.translate(0, -half, 0);
-            // Ragdolls cast no shadow: the nested render would otherwise draw the mob's own one.
-            entityRenderDispatcher.setRenderShadow(false);
-            entityRenderDispatcher.render(mob, 0, 0, 0, 0, partialTick, pose, buffers, light);
-            entityRenderDispatcher.setRenderShadow(true);
-        } else if (!shot.getItem().isEmpty()) {
-            pose.mulPose(Axis.YP.rotationDegrees(-entityYaw));
-            pose.mulPose(shot.getOrientation(partialTick));
-            itemRenderer.renderStatic(shot.getItem(), ItemDisplayContext.GROUND, light, OverlayTexture.NO_OVERLAY,
-                    pose, buffers, shot.level(), shot.getId());
-        }
-        pose.popPose();
-        super.render(shot, entityYaw, partialTick, pose, buffers, light);
+    public State createRenderState() {
+        return new State();
     }
 
     @Override
-    public ResourceLocation getTextureLocation(TankShot shot) {
-        return TextureAtlas.LOCATION_BLOCKS;
+    public void extractRenderState(TankShot shot, State state, float partialTick) {
+        super.extractRenderState(shot, state, partialTick);
+        state.yRot = shot.getYRot(partialTick);
+        state.orientation.set(shot.getOrientation(partialTick));
+        Entity mob = shot.getDisplayMob();
+        if (mob != null) {
+            EntityRenderState mobState = entityRenderDispatcher.extractEntity(mob, partialTick);
+            // Ragdolls cast no shadow: the nested render would otherwise draw the mob's own one.
+            mobState.shadowPieces.clear();
+            // The render copy is not in the level; light it like the ragdoll.
+            mobState.lightCoords = state.lightCoords;
+            state.mob = mobState;
+            state.mobHeight = mob.getBbHeight();
+            state.item.clear();
+        } else {
+            state.mob = null;
+            itemModelResolver.updateForNonLiving(state.item, shot.getItem(), ItemDisplayContext.GROUND, shot);
+        }
+    }
+
+    @Override
+    public void submit(State state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
+        pose.pushPose();
+        pose.translate(0, state.boundingBoxHeight / 2, 0);
+        if (state.mob != null) {
+            pose.mulPose(Axis.YP.rotationDegrees(-state.yRot));
+            pose.mulPose(state.orientation);
+            pose.translate(0, -state.mobHeight / 2, 0);
+            entityRenderDispatcher.submit(state.mob, camera, 0, 0, 0, pose, collector);
+        } else if (!state.item.isEmpty()) {
+            pose.mulPose(Axis.YP.rotationDegrees(-state.yRot));
+            pose.mulPose(state.orientation);
+            state.item.submit(pose, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor);
+        }
+        pose.popPose();
+        super.submit(state, pose, collector, camera);
+    }
+
+    public static final class State extends EntityRenderState {
+        float yRot;
+        final Quaternionf orientation = new Quaternionf();
+        @Nullable EntityRenderState mob;
+        float mobHeight;
+        final ItemStackRenderState item = new ItemStackRenderState();
     }
 }
