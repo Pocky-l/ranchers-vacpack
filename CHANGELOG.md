@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0+26.2] - 2026-10-08
 ### Changed
-- Port to Minecraft 26.2 (NeoForge). Requires NeoForge 26.2.0.88 or newer, GeckoLib 5.5.6 or newer and Java 25.
+- Port to Minecraft 26.2 ([NeoForge](https://neoforged.net/)). Requires NeoForge 26.2.0.88 or newer,
+  [GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib) 5.5.6 or newer and Java 25.
   Gameplay, config, sounds, particles, recipes and translations are unchanged.
 - Minecraft 26.3 is not supported yet: NeoForge for it is still in beta.
 - The key binding category has a new translation key, so its custom name has to be set again in resource packs.
