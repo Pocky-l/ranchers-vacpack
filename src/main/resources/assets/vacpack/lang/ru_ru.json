@@ -5,7 +5,7 @@
   "tooltip.vacpack.empty": "Бак пуст",
   "tooltip.vacpack.slot": "%s x%s",
   "tooltip.vacpack.controls": "Удерживайте «Использовать», чтобы всасывать, «Атаковать» — чтобы стрелять. Крупные мобы зависают в потоке — выстрел запускает их. Пустой слот даёт воздушный импульс. Слоты: R или Shift + колёсико.",
-  "key.categories.vacpack": "Rancher's Vacpack",
+  "key.category.vacpack.vacpack": "Rancher's Vacpack",
   "key.vacpack.cycle_slot": "Следующий слот бака",
   "vacpack.configuration.title": "Настройки Rancher's Vacpack",
   "vacpack.configuration.vacuum": "Всасывание",

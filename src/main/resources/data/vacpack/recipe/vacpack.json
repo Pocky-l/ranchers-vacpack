@@ -7,21 +7,11 @@
     "IRI"
   ],
   "key": {
-    "I": {
-      "item": "minecraft:iron_ingot"
-    },
-    "H": {
-      "item": "minecraft:hopper"
-    },
-    "S": {
-      "item": "minecraft:slime_ball"
-    },
-    "B": {
-      "item": "minecraft:breeze_rod"
-    },
-    "R": {
-      "item": "minecraft:redstone"
-    }
+    "I": "minecraft:iron_ingot",
+    "H": "minecraft:hopper",
+    "S": "minecraft:slime_ball",
+    "B": "minecraft:breeze_rod",
+    "R": "minecraft:redstone"
   },
   "result": {
     "id": "vacpack:vacpack",

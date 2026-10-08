@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "vacpack:item/creative_vacpack",
+    "model": {
+      "type": "geckolib:geckolib"
+    }
+  }
+}

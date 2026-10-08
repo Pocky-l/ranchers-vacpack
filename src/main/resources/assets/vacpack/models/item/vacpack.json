@@ -1,9 +1,11 @@
 {
-  "parent": "builtin/entity",
   "texture_size": [
     64,
     64
   ],
+  "textures": {
+    "particle": "vacpack:item/vacpack"
+  },
   "display": {
     "thirdperson_righthand": {
       "translation": [

@@ -1,3 +1,6 @@
 {
-  "parent": "vacpack:item/vacpack"
+  "parent": "vacpack:item/vacpack",
+  "textures": {
+    "particle": "vacpack:item/creative_vacpack"
+  }
 }

@@ -5,7 +5,7 @@
   "tooltip.vacpack.empty": "Tank is empty",
   "tooltip.vacpack.slot": "%s x%s",
   "tooltip.vacpack.controls": "Hold Use to vacuum, Attack to shoot. Big mobs float in the air stream - shoot to launch them. An empty slot fires a pulse wave. Switch slots with R or Sneak + Scroll.",
-  "key.categories.vacpack": "Rancher's Vacpack",
+  "key.category.vacpack.vacpack": "Rancher's Vacpack",
   "key.vacpack.cycle_slot": "Next Tank Slot",
   "vacpack.configuration.title": "Rancher's Vacpack Configuration",
   "vacpack.configuration.vacuum": "Vacuum",
