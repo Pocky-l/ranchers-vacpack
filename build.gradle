@@ -143,9 +143,11 @@ static String extractChangelog(String changelog, String version) {
     return body ?: null
 }
 
+// Versions of ports are tagged with their Minecraft version in the changelog, e.g. 1.1.0+26.2.
+def releaseVersion = "${mod_version}+${minecraft_version}"
 def releaseNotes = extractChangelog(
         providers.fileContents(layout.projectDirectory.file('CHANGELOG.md')).asText.getOrElse(''),
-        mod_version)
+        releaseVersion)
 def curseforgeToken = providers.gradleProperty('curseforge_token')
         .orElse(providers.environmentVariable('CURSEFORGE_TOKEN'))
 
@@ -155,7 +157,7 @@ var releaseNotesTask = tasks.register('releaseNotes') {
     description = 'Validates release metadata and writes notes for the current version.'
 
     def notes = releaseNotes
-    def version = mod_version
+    def version = releaseVersion
     def projectId = curseforge_project_id
     def output = layout.buildDirectory.file('release-notes.md')
     inputs.property('notes', notes ?: '')
@@ -177,7 +179,7 @@ publishMods {
     file = tasks.named('jar', Jar).flatMap { it.archiveFile }
     changelog = releaseNotes ?: ''
     type = STABLE
-    displayName = "${mod_name} ${mod_version}"
+    displayName = "${mod_name} ${releaseVersion}"
     modLoaders.add('neoforge')
     dryRun = providers.gradleProperty('dryRun').map { it != 'false' }.orElse(false)
 

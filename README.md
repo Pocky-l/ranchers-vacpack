@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://www.curseforge.com/minecraft/mc-mods/ranchers-vacpack"><img alt="CurseForge downloads" src="https://img.shields.io/curseforge/dt/1725381?logo=curseforge&label=CurseForge&color=F16436"></a>
-  <img alt="Minecraft 1.21.1" src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A">
+  <img alt="Minecraft 26.2" src="https://img.shields.io/badge/Minecraft-26.2-62B47A">
   <a href="https://neoforged.net"><img alt="NeoForge" src="https://img.shields.io/badge/Loader-NeoForge-F16436"></a>
   <a href="https://www.curseforge.com/minecraft/mc-mods/geckolib"><img alt="Requires GeckoLib" src="https://img.shields.io/badge/Requires-GeckoLib-4C9AFF"></a>
   <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue">
@@ -82,7 +82,7 @@ are ignored).
 
 ## Installation
 
-1. Install [NeoForge](https://neoforged.net) for Minecraft 1.21.1.
+1. Install [NeoForge](https://neoforged.net) for Minecraft 26.2 (26.2.0.88 or newer, Java 25).
 2. Put [GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib) and this mod into the `mods` folder.
 
 The mod is needed on both the client and the server.

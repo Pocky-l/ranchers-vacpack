@@ -2,7 +2,7 @@
 
 A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs, carry them in a tank and shoot them back out — or blast everything away with a pulse of air.
 
-**Requires [NeoForge](https://neoforged.net) 1.21.1 and [GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib).** Needed on both client and server.
+**Requires [NeoForge](https://neoforged.net) for Minecraft 26.2 and [GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib).** Needed on both client and server.
 
 ## Video showcase
 
