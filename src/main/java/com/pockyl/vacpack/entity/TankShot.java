@@ -151,7 +151,7 @@ public final class TankShot extends Projectile {
 
     public Entity getDisplayMob() {
         if (displayMob == null && carriesMob()) {
-            displayMob = MobData.create(getMob(), level()).orElse(null);
+            displayMob = MobData.createForDisplay(getMob(), level()).orElse(null);
         }
         return displayMob;
     }

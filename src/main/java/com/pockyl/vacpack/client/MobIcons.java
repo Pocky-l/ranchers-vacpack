@@ -58,7 +58,7 @@ public final class MobIcons {
         if (minecraft.level == null) {
             return null;
         }
-        return CACHE.computeIfAbsent(mob, tag -> MobData.create(tag, minecraft.level)
+        return CACHE.computeIfAbsent(mob, tag -> MobData.createForDisplay(tag, minecraft.level)
                 .filter(LivingEntity.class::isInstance)
                 .map(LivingEntity.class::cast)
                 .map(entity -> {

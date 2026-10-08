@@ -21,6 +21,7 @@ public final class MobData {
     private static final Logger LOGGER = LogUtils.getLogger();
     /** Stored mobs come back exactly as they were saved, like entities loaded from a chunk. */
     private static final EntitySpawnRequest LOAD = new EntitySpawnRequest(EntitySpawnReason.LOAD, true);
+    private static final int DISPLAY_ENTITY_ID = -1;
 
     private MobData() {
     }
@@ -37,10 +38,15 @@ public final class MobData {
         return data.read("id", EntityType.CODEC);
     }
 
-    /** Creates a copy of the saved entity that is not added to the level (e.g. for rendering). */
-    public static Optional<Entity> create(CompoundTag data, Level level) {
+    /**
+     * Creates a render copy of the saved entity that is never added to the level. Like the mob shown in a spawner, it
+     * gets the display entity id, since renderers read the id and unassigned ids throw.
+     */
+    public static Optional<Entity> createForDisplay(CompoundTag data, Level level) {
         try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(LOGGER)) {
-            return EntityType.create(TagValueInput.create(reporter, level.registryAccess(), data), level, LOAD);
+            Optional<Entity> entity = EntityType.create(TagValueInput.create(reporter, level.registryAccess(), data), level, LOAD);
+            entity.ifPresent(e -> e.setId(DISPLAY_ENTITY_ID));
+            return entity;
         }
     }
 
