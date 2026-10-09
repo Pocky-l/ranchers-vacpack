@@ -4,6 +4,21 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - Unreleased
+### Added
+- Special shots: some items now do something when they hit, and are used up when it works.
+  - Bone meal grows the crop, sapling or other plant it hits, just like using bone meal on it.
+  - A fire charge sets the block it hits on fire, lights campfires and candles and primes TNT; a mob it hits catches
+    fire for a few seconds.
+  - A snowball freezes the water it lands in, and a little around it, into frosted ice that melts again like Frost
+    Walker's; it also puts out fires, campfires and candles. Mobs it hits get a small knockback, and blazes take damage.
+  - Nothing changes in spawn protection or anywhere else you are not allowed to build. Items blown away by the Pulse
+    Wave do not count, only shots from the tank. The server option `shooting.itemEffects` turns special shots off.
+
+### Fixed
+- Picking berries with the vacpack now updates the neighbouring blocks like any other block change, so redstone and
+  other mods notice it, and it no longer works in spawn protection or other places where you may not interact.
+
 ## [1.1.0] - 2026-10-07
 ### Added
 - Creative Vacpack: a pink vacpack for creative mode with bottomless tank slots and no delay between shots that

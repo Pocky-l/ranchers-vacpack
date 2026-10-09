@@ -32,6 +32,10 @@
 - **Shoot** — press *Attack* to launch one item or mob from the selected slot, hold it to fire continuously.
   Shots are ragdolls: they fly, bounce off walls and mobs, roll, flop onto their side and get back up once they stop.
   Items hit mobs for a little damage and knockback; mobs land unharmed.
+- **Special shots** — some items act on the first thing they hit and are used up: bone meal grows the plant it hits
+  (crops, saplings, grass...), a fire charge sets the block or mob it hits on fire (and lights campfires, candles and
+  TNT), a snowball freezes the water it lands in into frosted ice that melts again, puts out fires and campfires and
+  hits mobs like a thrown snowball. Nothing changes where you are not allowed to build.
 - **Air stream holding** — mobs that do not fit into the tank (big slimes, cows, zombies...) float in front of the
   nozzle and follow your aim. Shoot to launch them, let go to drop them.
 - **Pulse Wave** — shooting with an empty slot releases a blast of air that sends mobs and items flying as ragdolls
@@ -74,7 +78,7 @@ Server config (`serverconfig/vacpack-server.toml` of the world, also editable fr
 |---|---|
 | `vacuum` | range (14), cone angle (30°), pull strength, capture distance, vacuum items / mobs / babies, max mob size, berry harvesting, holding mobs in the air stream and the max held size |
 | `tank` | slot count (4), items per slot (64), mobs per slot (10) |
-| `shooting` | shot speed, cooldown, damage of shot items |
+| `shooting` | shot speed, cooldown, damage of shot items, special shots (bone meal, fire charge, snowball) |
 | `pulseWave` | enabled, range, strength, cooldown, wind burst (rocket jump) |
 
 Data pack tags: `#vacpack:vacuumable` (entity types that can be vacuumed) and `#vacpack:not_vacuumable` (items that

@@ -28,6 +28,7 @@ public final class Config {
     private static final ModConfigSpec.DoubleValue SHOOT_SPEED;
     private static final ModConfigSpec.IntValue SHOOT_COOLDOWN;
     private static final ModConfigSpec.DoubleValue SHOT_DAMAGE;
+    private static final ModConfigSpec.BooleanValue SHOT_ITEM_EFFECTS;
 
     private static final ModConfigSpec.BooleanValue PULSE_ENABLED;
     private static final ModConfigSpec.DoubleValue PULSE_RANGE;
@@ -94,6 +95,10 @@ public final class Config {
         SHOT_DAMAGE = BUILDER.translation(key("shot_damage"))
                 .comment("Damage dealt by a shot item hitting a mob. 0 only knocks back.")
                 .defineInRange("shotDamage", 2.0, 0.0, 20.0);
+        SHOT_ITEM_EFFECTS = BUILDER.translation(key("shot_item_effects"))
+                .comment("Some shot items act on what they hit first and are used up: bone meal grows plants, fire charges")
+                .comment("set blocks and mobs on fire, snowballs freeze water and put out fires.")
+                .define("itemEffects", true);
         BUILDER.pop();
 
         BUILDER.translation(key("pulse")).push("pulseWave");
@@ -195,6 +200,10 @@ public final class Config {
 
     public static double shotDamage() {
         return get(SHOT_DAMAGE);
+    }
+
+    public static boolean shotItemEffects() {
+        return get(SHOT_ITEM_EFFECTS);
     }
 
     public static boolean pulseEnabled() {

@@ -30,6 +30,7 @@
   "subtitles.vacpack.tank_full": "Бак вакпака полон",
   "vacpack.configuration.harvest_berries": "Собирать ягоды",
   "vacpack.configuration.shot_damage": "Урон выстрела",
+  "vacpack.configuration.shot_item_effects": "Особые свойства снарядов",
   "vacpack.configuration.pulse": "Воздушный импульс",
   "vacpack.configuration.pulse_enabled": "Включён",
   "vacpack.configuration.pulse_range": "Дальность",

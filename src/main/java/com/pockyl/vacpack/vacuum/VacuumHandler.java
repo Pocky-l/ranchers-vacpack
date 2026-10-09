@@ -472,7 +472,7 @@ public final class VacuumHandler {
         Vec3 end = eye.add(player.getLookAngle().scale(Config.range()));
         BlockHitResult hit = level.clip(new ClipContext(eye, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
         BlockPos pos = hit.getType() == HitResult.Type.BLOCK ? hit.getBlockPos() : null;
-        if (pos == null || !Harvesting.canHarvest(level.getBlockState(pos))) {
+        if (pos == null || !Harvesting.canHarvest(level.getBlockState(pos)) || !player.mayInteract(level, pos)) {
             state.harvestPos = null;
             state.harvestTicks = 0;
             return;
@@ -525,6 +525,7 @@ public final class VacuumHandler {
         TankShot shot = taken.item().isEmpty()
                 ? TankShot.ofMob(level, player, taken.mob())
                 : TankShot.ofItem(level, player, taken.item());
+        shot.enableItemEffect();
         Vec3 origin = safeNozzlePos(player);
         placeShot(player, shot, origin);
         shot.setDeltaMovement(player.getLookAngle().scale(Config.shootSpeed()).add(0, 0.06, 0));

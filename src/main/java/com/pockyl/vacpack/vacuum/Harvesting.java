@@ -30,7 +30,10 @@ public final class Harvesting {
         return state.getBlock() instanceof CaveVines && CaveVines.hasGlowBerries(state);
     }
 
-    /** Detaches the fruit as item entities flying towards the player, ready to be vacuumed, and resets the plant. */
+    /**
+     * Detaches the fruit as item entities flying towards the player, ready to be vacuumed, and resets the plant. Like
+     * picking by hand, the change notifies neighbours and emits a game event (sculk sensors, mods watching blocks).
+     */
     public static void harvest(Level level, BlockPos pos, Player player) {
         BlockState state = level.getBlockState(pos);
         if (state.is(Blocks.SWEET_BERRY_BUSH)) {
@@ -40,14 +43,14 @@ public final class Harvesting {
             level.playSound(null, pos, ModSounds.HARVEST.get(), SoundSource.BLOCKS, 0.8F, 0.9F + level.random.nextFloat() * 0.3F);
             level.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + level.random.nextFloat() * 0.4F);
             BlockState picked = state.setValue(SweetBerryBushBlock.AGE, 1);
-            level.setBlock(pos, picked, Block.UPDATE_CLIENTS);
+            level.setBlock(pos, picked, Block.UPDATE_ALL);
             level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, picked));
         } else if (state.getBlock() instanceof CaveVines && CaveVines.hasGlowBerries(state)) {
             spawnFruit(level, pos, player, new ItemStack(Items.GLOW_BERRIES));
             level.playSound(null, pos, ModSounds.HARVEST.get(), SoundSource.BLOCKS, 0.8F, 0.9F + level.random.nextFloat() * 0.3F);
             level.playSound(null, pos, SoundEvents.CAVE_VINES_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + level.random.nextFloat() * 0.4F);
             BlockState picked = state.setValue(CaveVines.BERRIES, false);
-            level.setBlock(pos, picked, Block.UPDATE_CLIENTS);
+            level.setBlock(pos, picked, Block.UPDATE_ALL);
             level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, picked));
         }
     }
