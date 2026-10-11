@@ -1,45 +1,44 @@
 # Rancher's Vacpack
 
-A Slime Rancher inspired vacuum gun for Minecraft: suck up items and small mobs, carry them in a tank and shoot them back out — or blast everything away with a pulse of air.
-
-**Requires [NeoForge](https://neoforged.net) (Minecraft 1.21.1 or 26.2) or [Forge](https://files.minecraftforge.net) (Minecraft 1.20.1), and [GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib).** Needed on both client and server.
-
-## Video showcase
+**A Slime Rancher inspired vacuum gun** - suck up items and small mobs, carry them in a tank and shoot them back out,
+or blast everything away with a pulse of air.
 
 [![Rancher's Vacpack showcase video](https://img.youtube.com/vi/977JtGoXSZg/maxresdefault.jpg)](https://www.youtube.com/watch?v=977JtGoXSZg)
 
-*Watch the showcase on [YouTube](https://www.youtube.com/watch?v=977JtGoXSZg)*
+*▶️ Watch the showcase on [YouTube](https://www.youtube.com/watch?v=977JtGoXSZg)*
 
-![A horse too big for the tank floats in the air stream](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/screenshots/air-stream.jpg)
+📦 **Requires** [NeoForge](https://neoforged.net) (Minecraft 1.21.1 or 26.2) or [Forge](https://files.minecraftforge.net)
+(Minecraft 1.20.1) and [GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib), on client and server
 
-*A horse too big for the tank floats in the air stream*
+## ✨ Features
 
-## Features
+- 🌀 **Vacuum** - hold *Use* to suck in items and small mobs along a glowing air vortex, at full walking speed.
+- 🎒 **Tank** - 4 slots of one item kind (up to 64) or one mob kind (up to 10); mobs keep their name, health, gear and
+  owner; spinning 3D models in the HUD.
+- 🎯 **Shoot** - *Attack* launches the selected slot, hold for auto-fire; shots are ragdolls that bounce, roll and get
+  back up.
+- 🌱 **Special shots** - bone meal grows plants, a fire charge sets things alight, a snowball freezes water and puts
+  out fires.
+- 🐄 **Air stream** - mobs too big for the tank float in front of the nozzle and follow your aim.
+- 💥 **Pulse Wave** - an empty slot fires a blast of air that throws mobs back and deflects projectiles; aim at the
+  ground for a rocket jump.
+- 🍓 **Harvesting** - vacuum ripe sweet berries and glow berries off their plants.
+- 💗 **Creative Vacpack** - bottomless slots, no shot delay, vacuums any mob except bosses.
 
-* **Vacuum** — hold *Use* to suck in dropped items and small mobs. They swirl along a glowing air vortex and shrink into the nozzle. You keep full movement speed while vacuuming.
-* **Tank** — 4 slots; each holds one kind of item (up to 64) or one kind of mob (up to 10). Captured mobs keep everything: name, health, equipment, even their owner. The HUD next to the hotbar shows spinning 3D models of them.
-* **Shoot** — press *Attack* to launch one item or mob from the selected slot, hold it to fire continuously. Shots are ragdolls: they fly, bounce off walls and mobs, roll, flop onto their side and get back up. Items hit mobs for a little damage; mobs land unharmed.
-* **Special shots** — bone meal grows the plant it hits, a fire charge sets blocks and mobs on fire, a snowball freezes water into melting frosted ice and puts out fires. The item is used up when it works.
-* **Air stream holding** — mobs too big for the tank (big slimes, cows, zombies...) float in front of the nozzle and follow your aim. Shoot to launch them, let go to drop them.
-* **Pulse Wave** — shooting with an empty slot releases a blast of air that sends mobs and items flying and deflects projectiles. Fire it at the ground right next to you for a rocket jump, wind charge style.
-* **Harvesting** — vacuum ripe sweet berry bushes and glow berry vines to pull the berries off.
-* **Creative Vacpack** — a pink vacpack for creative mode: bottomless tank slots, no delay between shots and it vacuums any mob, big or small (except bosses). Not craftable; find it in the creative tabs.
-* **Feel** — animated model, third-person aiming pose, custom sounds and particles; under water the airflow turns into bubbles.
+**Vacuumable mobs:** babies of any kind, small slimes and magma cubes, chickens, rabbits, pigs, cats, ocelots, foxes,
+wolves, parrots, frogs, tadpoles, bees, allays, axolotls, squids, dolphins, fish, armadillos, bats, vexes, phantoms,
+cave spiders, silverfish and endermites. Bosses, leashed mobs, riders and other players' pets are safe.
 
-## Vacuumable mobs
-
-Babies of any kind, small slimes and magma cubes, chickens, rabbits, pigs, cats, ocelots, foxes, wolves, parrots, frogs, tadpoles, bees, allays, axolotls, squids, dolphins, fish, armadillos, bats, vexes, phantoms, cave spiders, silverfish and endermites. Bosses, leashed mobs, riders and other players' pets are safe.
-
-## Controls
+## 🎮 Controls
 
 | Action | Default |
 | --- | --- |
 | Vacuum / hold a mob | Hold *Use* (right click) |
-| Shoot / launch held mob / pulse wave | *Attack* (left click), hold for auto-fire |
+| Shoot / launch / pulse wave | *Attack* (left click), hold for auto-fire |
 | Next tank slot | `R` or *Sneak* + *Scroll* |
-| Use blocks while holding the vacpack | *Sneak* + *Use* |
+| Use blocks with the vacpack in hand | *Sneak* + *Use* |
 
-## Crafting
+## ⛏️ Crafting
 
 |  |  |  |
 | --- | --- | --- |
@@ -47,53 +46,52 @@ Babies of any kind, small slimes and magma cubes, chickens, rabbits, pigs, cats,
 | Slime Ball | Breeze Rod | Slime Ball |
 | Iron Ingot | Redstone | Iron Ingot |
 
-The recipe unlocks when you pick up a Breeze Rod.
+Unlocks when you pick up a Breeze Rod.
 
-## Configuration
+## ⚙️ Configuration
 
-Everything is configurable in the server config (`vacpack-server.toml`, also editable from the in-game mod list): vacuum range and strength, which mobs and items can be vacuumed, tank size, shot speed and damage, special shots, pulse wave strength and more. Data pack tags `#vacpack:vacuumable` and `#vacpack:not_vacuumable` control what can be picked up.
+`vacpack-server.toml` (also in the in-game mod list): range, strength, which mobs and items, tank size, shots, pulse
+wave and more. Data pack tags `#vacpack:vacuumable` and `#vacpack:not_vacuumable`.
 
-## Credits
+## 📸 Screenshots
 
-Made by **Pocky**. Sound effects built from royalty-free sources: Kenney (CC0), OpenGameArt (CC0) and BigSoundBank.
+![A horse too big for the tank floats in the air stream](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/screenshots/air-stream.jpg)
 
-Inspired by Slime Rancher. This is a fan-made mod and is not affiliated with Monomi Park.
+*A horse too big for the tank floats in the air stream*
 
-Source code: [GitHub](https://github.com/Pocky-l/ranchers-vacpack)
+## 💛 Credits
+
+Made by **Pocky** · [source code](https://github.com/Pocky-l/ranchers-vacpack) · sounds built from royalty-free
+sources: Kenney (CC0), OpenGameArt (CC0) and BigSoundBank. Inspired by Slime Rancher; a fan-made mod, not affiliated
+with Monomi Park.
 
 <!-- more-mods:start -->
 ## More mods by Pocky
 
-[![Turbo for Distant Horizons](https://raw.githubusercontent.com/Pocky-l/dhturbo/main/docs/icon.png)](https://www.curseforge.com/minecraft/mc-mods/turbo-for-distant-horizons)
+**🌦️ Weather & nature**
 
-**[Turbo for Distant Horizons](https://www.curseforge.com/minecraft/mc-mods/turbo-for-distant-horizons)** - Distant Horizons addon: generates distant terrain from the world noise many times faster, with real trees nearby. ([source](https://github.com/Pocky-l/dhturbo))
+[![Hoarfrost: Snow & Blizzards](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/hoarfrost.png)](https://www.curseforge.com/minecraft/mc-mods/hoarfrost-snow-blizzards) **[Hoarfrost: Snow & Blizzards](https://www.curseforge.com/minecraft/mc-mods/hoarfrost-snow-blizzards)** - seven kinds of snowfall, a living wind and soft snow on the land
 
-[![Hoarfrost: Snow & Blizzards](https://raw.githubusercontent.com/Pocky-l/hoarfrost/main/docs/icon.png)](https://www.curseforge.com/minecraft/mc-mods/hoarfrost-snow-blizzards)
+[![Petrichor: Rain & Storms](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/petrichor.png)](https://www.curseforge.com/minecraft/mc-mods/petrichor-rain-storms) **[Petrichor: Rain & Storms](https://www.curseforge.com/minecraft/mc-mods/petrichor-rain-storms)** - realistic rain, puddles, drips and branching lightning
 
-**[Hoarfrost: Snow & Blizzards](https://www.curseforge.com/minecraft/mc-mods/hoarfrost-snow-blizzards)** - Cosy, realistic snowy weather: seven kinds of snowfall and blizzard, flakes carried by a living wind, soft snow settling on the land and a quiet winter soundscape. ([source](https://github.com/Pocky-l/hoarfrost))
+[![Rustling Leaves](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/rustling_leaves.png)](https://www.curseforge.com/minecraft/mc-mods/rustling-leaves) **[Rustling Leaves](https://www.curseforge.com/minecraft/mc-mods/rustling-leaves)** - falling leaves and leaf piles you can wade through, rake and blow away
 
-[![Holy Staff](https://raw.githubusercontent.com/Pocky-l/holy-staff/main/docs/icon.png)](https://www.curseforge.com/minecraft/mc-mods/holy-staff)
+**💡 Light**
 
-**[Holy Staff](https://www.curseforge.com/minecraft/mc-mods/holy-staff)** - A holy staff with three healing skills, aim previews and flying heal numbers. ([source](https://github.com/Pocky-l/holy-staff))
+[![Lumen Rigs](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/lumen_rigs.png)](https://www.curseforge.com/minecraft/mc-mods/lumen-rigs) **[Lumen Rigs](https://www.curseforge.com/minecraft/mc-mods/lumen-rigs)** - aimable spotlights and floodlights with colored light and visible beams
 
-[![Inventory Backups](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/icon.png)](https://www.curseforge.com/minecraft/mc-mods/inventory-backups)
+[![Neon Glowsticks](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/neon_glowsticks.png)](https://www.curseforge.com/minecraft/mc-mods/neon-glowsticks) **[Neon Glowsticks](https://www.curseforge.com/minecraft/mc-mods/neon-glowsticks)** - throwable glowsticks that bounce, roll and light up the dark
 
-**[Inventory Backups](https://www.curseforge.com/minecraft/mc-mods/inventory-backups)** - Automatic player inventory and ender chest backups with a clickable chat browser, previews and one-click restore for admins. ([source](https://github.com/Pocky-l/inventory-backups))
+**🎨 Graphics & performance**
 
-[![Lumen Rigs](https://raw.githubusercontent.com/Pocky-l/lumen-rigs/main/docs/icon.png)](https://www.curseforge.com/minecraft/mc-mods/lumen-rigs)
+[![Turbo for Distant Horizons](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/dhturbo.png)](https://www.curseforge.com/minecraft/mc-mods/turbo-for-distant-horizons) **[Turbo for Distant Horizons](https://www.curseforge.com/minecraft/mc-mods/turbo-for-distant-horizons)** - Distant Horizons terrain generated many times faster
 
-**[Lumen Rigs](https://www.curseforge.com/minecraft/mc-mods/lumen-rigs)** - Aimable spotlights, floodlights, searchlights and soft panels with colored light and visible beams. ([source](https://github.com/Pocky-l/lumen-rigs))
+**⚔️ Gear & gameplay**
 
-[![Neon Glowsticks](https://raw.githubusercontent.com/Pocky-l/neon-glowsticks/main/docs/icon.png)](https://www.curseforge.com/minecraft/mc-mods/neon-glowsticks)
+[![Holy Staff](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/holy_staff.png)](https://www.curseforge.com/minecraft/mc-mods/holy-staff) **[Holy Staff](https://www.curseforge.com/minecraft/mc-mods/holy-staff)** - a healing staff with three skills and flying heal numbers
 
-**[Neon Glowsticks](https://www.curseforge.com/minecraft/mc-mods/neon-glowsticks)** - Throwable glowsticks that bounce, roll and light up the dark with colored light. ([source](https://github.com/Pocky-l/neon-glowsticks))
+**🛠️ Server tools**
 
-[![Petrichor: Rain & Storms](https://raw.githubusercontent.com/Pocky-l/petrichor/main/docs/icon.png)](https://www.curseforge.com/minecraft/mc-mods/petrichor-rain-storms)
-
-**[Petrichor: Rain & Storms](https://www.curseforge.com/minecraft/mc-mods/petrichor-rain-storms)** - Realistic rain and storms: rain types, puddles, runoff and drips, branching lightning with delayed thunder. ([source](https://github.com/Pocky-l/petrichor))
-
-[![Rustling Leaves](https://raw.githubusercontent.com/Pocky-l/rustling-leaves/main/docs/icon.png)](https://www.curseforge.com/minecraft/mc-mods/rustling-leaves)
-
-**[Rustling Leaves](https://www.curseforge.com/minecraft/mc-mods/rustling-leaves)** - Physically simulated leaves: falling leaves, leaf piles you can wade through, rake and blow away, gusts, whirlwinds and leaf tools. ([source](https://github.com/Pocky-l/rustling-leaves))
+[![Inventory Backups](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/inventorybackups.png)](https://www.curseforge.com/minecraft/mc-mods/inventory-backups) **[Inventory Backups](https://www.curseforge.com/minecraft/mc-mods/inventory-backups)** - inventory and ender chest backups with one-click restore for admins
 
 <!-- more-mods:end -->
