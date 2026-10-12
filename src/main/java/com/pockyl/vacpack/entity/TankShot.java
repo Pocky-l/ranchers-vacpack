@@ -39,7 +39,9 @@ import com.pockyl.vacpack.registry.ModAttachments;
 import com.pockyl.vacpack.registry.ModEntities;
 import com.pockyl.vacpack.registry.ModParticles;
 import com.pockyl.vacpack.registry.ModSounds;
+import com.pockyl.vacpack.registry.ModTags;
 import com.pockyl.vacpack.vacuum.Shot;
+import com.pockyl.vacpack.vacuum.ShotFeeding;
 import com.pockyl.vacpack.vacuum.ShotItemEffects;
 import com.pockyl.vacpack.vacuum.ShotProtection;
 
@@ -73,6 +75,8 @@ public final class TankShot extends Projectile {
     private int slowTicks;
     /** Server-only: the item still has its effect for the first thing it hits (see {@link ShotItemEffects}). */
     private boolean itemEffect;
+    /** Server-only: fired from the tank (not blown away by a pulse wave), so animals may eat it. */
+    private boolean fired;
 
     // Client-only ragdoll body: orientation and angular velocity (radians per tick) in the yaw-aligned frame, plus the
     // secondary motion of head and limbs. Previous orientation is kept for interpolation.
@@ -106,10 +110,11 @@ public final class TankShot extends Projectile {
     }
 
     /**
-     * Lets the item act on the first thing it hits. Only for shots fired from the tank, not for dropped items blown
-     * away by a pulse wave.
+     * Lets the item act on the first thing it hits, and animals eat it when it is their food. Only for shots fired from
+     * the tank, not for dropped items blown away by a pulse wave.
      */
     public void enableItemEffect() {
+        fired = true;
         itemEffect = ShotItemEffects.hasEffect(getItem());
     }
 
@@ -233,7 +238,7 @@ public final class TankShot extends Projectile {
         }
     }
 
-    /** Hits each mob in the path at most once in a while: items deal damage, everything knocks back and bounces off. */
+    /** Hits each mob in the path at most once in a while: items deal damage (except soft ones), everything knocks back and bounces off. */
     private void hitEntities(Vec3 velocity) {
         if (velocity.lengthSqr() < 0.04) {
             return;
@@ -252,11 +257,15 @@ public final class TankShot extends Projectile {
         if (!level().isClientSide()) {
             boolean firstHit = itemEffect;
             itemEffect = false;
+            if (fired && ShotFeeding.tryFeed(this, target)) {
+                useUpItem();
+                return;
+            }
             if (firstHit && ShotItemEffects.hitMob(this, target, velocity)) {
                 useUpItem();
                 return;
             }
-            if (!carriesMob() && Config.shotDamage() > 0) {
+            if (!carriesMob() && !getItem().is(ModTags.HARMLESS_SHOTS) && Config.shotDamage() > 0) {
                 target.hurt(damageSources().thrown(this, getOwner()), (float) Config.shotDamage());
             }
             target.knockback(carriesMob() ? 0.9 : 0.6, -velocity.x, -velocity.z);
@@ -573,6 +582,9 @@ public final class TankShot extends Projectile {
         if (itemEffect) {
             tag.putBoolean("ItemEffect", true);
         }
+        if (fired) {
+            tag.putBoolean("Fired", true);
+        }
     }
 
     @Override
@@ -581,5 +593,6 @@ public final class TankShot extends Projectile {
         entityData.set(ITEM, ItemStack.parseOptional(registryAccess(), tag.getCompound("Item")));
         entityData.set(MOB, tag.getCompound("Mob"));
         itemEffect = tag.getBoolean("ItemEffect");
+        fired = tag.getBoolean("Fired");
     }
 }

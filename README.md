@@ -29,6 +29,8 @@
   back up.
 - 🌱 **Special shots** - bone meal grows plants, a fire charge sets things alight, a snowball freezes water and puts
   out fires.
+- 🥕 **Feeding by shot** - shoot wheat at cows, carrots at pigs, seeds at chickens: grown-ups fall in love, babies
+  grow up faster, hurt pets heal. Soft shots like wheat, seeds and wool never hurt anyone.
 - 🐄 **Air stream** - mobs too big for the tank float in front of the nozzle and follow your aim.
 - 💥 **Pulse Wave** - an empty slot fires a blast of air that throws mobs back and deflects projectiles; aim at the
   ground for a rocket jump.
@@ -67,7 +69,7 @@ Server config (`serverconfig/vacpack-server.toml` of the world, also editable fr
 |---|---|
 | `vacuum` | range (14), cone angle (30°), pull strength, capture distance, vacuum items / mobs / babies, max mob size, berry harvesting, holding mobs in the air stream and the max held size |
 | `tank` | slot count (4), items per slot (64), mobs per slot (10) |
-| `shooting` | shot speed, cooldown, damage of shot items, special shots (bone meal, fire charge, snowball) |
+| `shooting` | shot speed, cooldown, damage of shot items, special shots (bone meal, fire charge, snowball), feeding by shot |
 | `pulseWave` | enabled, range, strength, cooldown, wind burst (rocket jump) |
 
 Data pack tags: `#vacpack:vacuumable` (entity types that can be vacuumed) and `#vacpack:not_vacuumable` (items that

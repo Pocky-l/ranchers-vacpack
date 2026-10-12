@@ -4,6 +4,21 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - Unreleased
+### Added
+- Feeding by shot: an animal hit by a shot of its own food eats it, as if you fed it by hand. Shoot wheat at cows and
+  sheep, carrots at pigs, seeds at chickens, and so on for every animal:
+  - grown-ups fall in love, so you can breed a whole pen from a distance;
+  - babies grow up faster;
+  - your own hurt pets are healed.
+- Animals that have to be tamed first (wolves, cats, horses and the like) only eat once they are tame; anything else
+  is hit like by any other shot. Only shots from the tank count, not items blown away by the Pulse Wave.
+- New server option `shooting.feeding` turns feeding off.
+
+### Changed
+- Soft shots deal no damage: wheat, seeds, sugar, feathers, string, paper, small flowers, wool and carpets only push
+  mobs back. The item tag `vacpack:harmless_shots` lists them and can be changed by a data pack.
+
 ## [1.2.0] - 2026-10-09
 ### Added
 - Special shots: some items now do something when they hit, and are used up when it works.

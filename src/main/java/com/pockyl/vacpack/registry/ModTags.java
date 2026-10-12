@@ -14,6 +14,9 @@ public final class ModTags {
     /** Items the vacpack ignores. */
     public static final TagKey<Item> NOT_VACUUMABLE = TagKey.create(Registries.ITEM, Vacpack.id("not_vacuumable"));
 
+    /** Soft items (wheat, seeds, feathers, wool...) that knock mobs back when shot but deal no damage. */
+    public static final TagKey<Item> HARMLESS_SHOTS = TagKey.create(Registries.ITEM, Vacpack.id("harmless_shots"));
+
     private ModTags() {
     }
 }

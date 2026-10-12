@@ -1,0 +1,18 @@
+{
+  "values": [
+    "minecraft:wheat",
+    "minecraft:wheat_seeds",
+    "minecraft:beetroot_seeds",
+    "minecraft:melon_seeds",
+    "minecraft:pumpkin_seeds",
+    "minecraft:torchflower_seeds",
+    "minecraft:pitcher_pod",
+    "minecraft:sugar",
+    "minecraft:feather",
+    "minecraft:string",
+    "minecraft:paper",
+    "#minecraft:small_flowers",
+    "#minecraft:wool",
+    "#minecraft:wool_carpets"
+  ]
+}

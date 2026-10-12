@@ -19,6 +19,8 @@ or blast everything away with a pulse of air.
   back up.
 - 🌱 **Special shots** - bone meal grows plants, a fire charge sets things alight, a snowball freezes water and puts
   out fires.
+- 🥕 **Feeding by shot** - shoot wheat at cows, carrots at pigs, seeds at chickens: grown-ups fall in love, babies
+  grow up faster, hurt pets heal. Soft shots like wheat, seeds and wool never hurt anyone.
 - 🐄 **Air stream** - mobs too big for the tank float in front of the nozzle and follow your aim.
 - 💥 **Pulse Wave** - an empty slot fires a blast of air that throws mobs back and deflects projectiles; aim at the
   ground for a rocket jump.

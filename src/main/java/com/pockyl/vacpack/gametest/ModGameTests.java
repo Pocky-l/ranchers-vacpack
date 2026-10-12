@@ -7,11 +7,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Cat;
 import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
@@ -446,6 +449,88 @@ public final class ModGameTests {
         helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(wheat)).inflate(4), e -> true)
                 .forEach(ItemEntity::discard);
         helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void wheatShotMakesCowsFallInLoveAndCalvesGrow(GameTestHelper helper) {
+        Cow cow = stillMob(helper, EntityType.COW, new Vec3(3.5, 2.0, 0.5));
+        TankShot shot = foodShot(helper, new ItemStack(Items.WHEAT), cow, true);
+        shot.tick();
+        helper.assertTrue(cow.isInLove(), "the cow falls in love");
+        helper.assertTrue(cow.getHealth() == cow.getMaxHealth(), "and takes no damage");
+        helper.assertTrue(shot.isRemoved(), "the wheat is eaten");
+
+        Cow calf = stillMob(helper, EntityType.COW, new Vec3(3.5, 2.0, 3.5));
+        calf.setAge(-24000);
+        foodShot(helper, new ItemStack(Items.WHEAT), calf, true).tick();
+        helper.assertTrue(calf.getAge() > -24000 && !calf.isInLove(), "the calf grows up faster, got age " + calf.getAge());
+        cow.discard();
+        calf.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void softShotsDealNoDamage(GameTestHelper helper) {
+        Pig pig = stillMob(helper, EntityType.PIG, new Vec3(3.5, 2.0, 0.5));
+        TankShot shot = foodShot(helper, new ItemStack(Items.WHEAT), pig, true);
+        shot.tick();
+        helper.assertTrue(pig.getHealth() == pig.getMaxHealth(), "wheat does not hurt a pig that does not eat it");
+        helper.assertTrue(pig.getDeltaMovement().x > 0, "but still pushes it away");
+        shot.discard();
+        pig.discard();
+        AABB area = new AABB(helper.absolutePos(new BlockPos(3, 2, 0))).inflate(6);
+        helper.getLevel().getEntitiesOfClass(ItemEntity.class, area, e -> true).forEach(ItemEntity::discard);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void onlyTameAnimalsAndTankShotsAreFed(GameTestHelper helper) {
+        Wolf wild = stillMob(helper, EntityType.WOLF, new Vec3(3.5, 2.0, 0.5));
+        foodShot(helper, new ItemStack(Items.BEEF), wild, true).tick();
+        helper.assertFalse(wild.isInLove(), "a wild wolf does not eat");
+        helper.assertTrue(wild.getHealth() < wild.getMaxHealth(), "it is hit like by any other item");
+
+        Wolf pet = stillMob(helper, EntityType.WOLF, new Vec3(3.5, 2.0, 3.5));
+        Player owner = player(helper);
+        pet.tame(owner);
+        pet.setHealth(4.0F);
+        TankShot shot = foodShot(helper, new ItemStack(Items.BEEF), pet, true);
+        shot.setOwner(owner);
+        shot.tick();
+        helper.assertTrue(pet.getHealth() > 4.0F && !pet.isInLove(), "a hurt tame wolf eats the beef to heal, got " + pet.getHealth());
+
+        Cow cow = stillMob(helper, EntityType.COW, new Vec3(3.5, 2.0, -2.5));
+        TankShot blown = foodShot(helper, new ItemStack(Items.WHEAT), cow, false);
+        blown.tick();
+        helper.assertFalse(cow.isInLove(), "wheat blown by a pulse wave is not eaten");
+        blown.discard();
+        for (Entity mob : new Entity[] {wild, pet, cow}) {
+            mob.discard();
+        }
+        AABB area = new AABB(helper.absolutePos(new BlockPos(3, 2, 0))).inflate(6);
+        helper.getLevel().getEntitiesOfClass(ItemEntity.class, area, e -> true).forEach(ItemEntity::discard);
+        helper.succeed();
+    }
+
+    private static <T extends Mob> T stillMob(GameTestHelper helper, EntityType<T> type, Vec3 relative) {
+        T mob = type.create(helper.getLevel());
+        Vec3 pos = helper.absoluteVec(relative);
+        mob.moveTo(pos.x, pos.y, pos.z, 0, 0);
+        mob.setNoAi(true);
+        helper.getLevel().addFreshEntity(mob);
+        return mob;
+    }
+
+    /** A shot flying straight at the mob from 1.5 blocks away; {@code fired}: from the tank, not blown by a pulse. */
+    private static TankShot foodShot(GameTestHelper helper, ItemStack food, Mob target, boolean fired) {
+        TankShot shot = TankShot.ofItem(helper.getLevel(), player(helper), food);
+        if (fired) {
+            shot.enableItemEffect();
+        }
+        shot.moveTo(target.getX() - 1.5, target.getY() + 0.5, target.getZ(), 0, 0);
+        shot.setDeltaMovement(1.2, 0, 0);
+        helper.getLevel().addFreshEntity(shot);
+        return shot;
     }
 
     /** Wheat at age 0 on farmland; returns the wheat's relative position. */
