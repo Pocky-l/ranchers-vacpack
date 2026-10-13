@@ -1,0 +1,33 @@
+{
+  "display": {
+    "icon": {
+      "id": "vacpack:vacpack"
+    },
+    "title": {
+      "translate": "advancements.vacpack.root.title"
+    },
+    "description": {
+      "translate": "advancements.vacpack.root.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false,
+    "background": "minecraft:textures/block/light_blue_terracotta.png"
+  },
+  "criteria": {
+    "has_vacpack": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "vacpack:vacpack",
+              "vacpack:creative_vacpack"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

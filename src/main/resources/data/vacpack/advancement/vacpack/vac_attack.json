@@ -1,0 +1,23 @@
+{
+  "parent": "vacpack:vacpack/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:chicken_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.vacpack.vac_attack.title"
+    },
+    "description": {
+      "translate": "advancements.vacpack.vac_attack.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "parent": "vacpack:vacpack/vac_attack",
+  "display": {
+    "icon": {
+      "id": "minecraft:slime_ball"
+    },
+    "title": {
+      "translate": "advancements.vacpack.slime_collector.title"
+    },
+    "description": {
+      "translate": "advancements.vacpack.slime_collector.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

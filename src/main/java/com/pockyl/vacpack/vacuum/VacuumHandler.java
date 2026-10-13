@@ -248,6 +248,11 @@ public final class VacuumHandler {
         if (updated != null) {
             animateCapture(player, mob);
             mob.discard();
+            VacAdvancements.award(player, VacAdvancements.VAC_ATTACK);
+            if (mob.getType() == EntityType.SLIME && updated.slots().stream()
+                    .anyMatch(slot -> slot.matchesMob(EntityType.SLIME) && slot.amount() >= mobCapacity)) {
+                VacAdvancements.award(player, VacAdvancements.SLIME_COLLECTOR);
+            }
         }
         return updated;
     }
@@ -572,6 +577,9 @@ public final class VacuumHandler {
             double strength = Config.pulseStrength() * (1.0 - 0.35 * distance / range);
             if (entity instanceof LivingEntity living) {
                 strength *= 1.0 - Mth.clamp(living.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE), 0.0, 1.0);
+            }
+            if (entity instanceof Projectile projectile && projectile.getOwner() != null && projectile.getOwner() != player) {
+                VacAdvancements.award(player, VacAdvancements.RETURN_TO_SENDER);
             }
             Vec3 direction = distance > 0.5 ? toEntity.normalize() : look;
             // Lift living things off the ground, otherwise ground friction eats the push at once.

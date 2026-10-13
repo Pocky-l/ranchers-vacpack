@@ -48,6 +48,7 @@ public final class VacpackItem extends Item implements GeoItem {
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("idle");
 
     private static final int BAR_COLOR = 0x6FD3FF;
+    private static final int CONTROL_LINES = 5;
     /** Slot capacity of the Creative Vacpack: effectively unlimited, but far from integer overflow. */
     private static final int CREATIVE_CAPACITY = 1_000_000;
 
@@ -133,7 +134,13 @@ public final class VacpackItem extends Item implements GeoItem {
                 }
             }
         }
-        tooltip.add(Component.translatable("tooltip.vacpack.controls").withStyle(ChatFormatting.DARK_GRAY));
+        if (flag.hasShiftDown()) {
+            for (int i = 1; i <= CONTROL_LINES; i++) {
+                tooltip.add(Component.translatable("tooltip.vacpack.controls." + i).withStyle(ChatFormatting.GRAY));
+            }
+        } else {
+            tooltip.add(Component.translatable("tooltip.vacpack.controls.hint").withStyle(ChatFormatting.DARK_GRAY));
+        }
     }
 
     public static Component contentName(TankSlot slot) {

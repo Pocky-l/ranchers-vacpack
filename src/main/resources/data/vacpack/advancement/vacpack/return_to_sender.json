@@ -1,0 +1,23 @@
+{
+  "parent": "vacpack:vacpack/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:arrow"
+    },
+    "title": {
+      "translate": "advancements.vacpack.return_to_sender.title"
+    },
+    "description": {
+      "translate": "advancements.vacpack.return_to_sender.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

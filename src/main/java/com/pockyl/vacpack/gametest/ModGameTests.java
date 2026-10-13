@@ -1,5 +1,6 @@
 package com.pockyl.vacpack.gametest;
 
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -43,6 +44,7 @@ import com.pockyl.vacpack.registry.ModAttachments;
 import com.pockyl.vacpack.registry.ModDataComponents;
 import com.pockyl.vacpack.registry.ModItems;
 import com.pockyl.vacpack.tank.VacTank;
+import com.pockyl.vacpack.vacuum.VacAdvancements;
 import com.pockyl.vacpack.vacuum.VacuumHandler;
 import com.pockyl.vacpack.vacuum.VacuumState;
 
@@ -605,6 +607,24 @@ public final class ModGameTests {
         int left = player.getMainHandItem().getOrDefault(ModDataComponents.TANK, VacTank.EMPTY).slot(0).count();
         helper.getLevel().getEntitiesOfClass(TankShot.class, new AABB(player.blockPosition()).inflate(8)).forEach(TankShot::discard);
         return 5 - left;
+    }
+
+    /** The vacuum code needs a client to send animations to; this checks the advancements and their criterion. */
+    @GameTest(template = "empty")
+    public static void advancementsAreAwarded(GameTestHelper helper) {
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        for (String name : new String[] {VacAdvancements.VAC_ATTACK, VacAdvancements.SLIME_COLLECTOR, VacAdvancements.RETURN_TO_SENDER}) {
+            helper.assertFalse(isDone(player, name), name + " starts open");
+            VacAdvancements.award(player, name);
+            helper.assertTrue(isDone(player, name), name + " is awarded");
+        }
+        player.discard();
+        helper.succeed();
+    }
+
+    private static boolean isDone(ServerPlayer player, String name) {
+        AdvancementHolder advancement = player.server.getAdvancements().get(Vacpack.id("vacpack/" + name));
+        return advancement != null && player.getAdvancements().getOrStartProgress(advancement).isDone();
     }
 
     private static Player player(GameTestHelper helper) {

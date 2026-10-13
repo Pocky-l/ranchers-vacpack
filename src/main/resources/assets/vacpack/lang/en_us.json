@@ -4,7 +4,6 @@
   "tooltip.vacpack.creative": "Creative: bottomless slots, no shot cooldown, takes any mob except bosses",
   "tooltip.vacpack.empty": "Tank is empty",
   "tooltip.vacpack.slot": "%s x%s",
-  "tooltip.vacpack.controls": "Hold Use to vacuum, Attack to shoot. Big mobs float in the air stream - shoot to launch them. An empty slot fires a pulse wave. Switch slots with R or Sneak + Scroll.",
   "key.categories.vacpack": "Rancher's Vacpack",
   "key.vacpack.cycle_slot": "Next Tank Slot",
   "vacpack.configuration.title": "Rancher's Vacpack Configuration",
@@ -47,5 +46,19 @@
   "subtitles.vacpack.land": "Something lands",
   "vacpack.configuration.vacuum_babies": "Vacuum Baby Mobs",
   "vacpack.configuration.pulse_wind_burst": "Wind Burst (Rocket Jump)",
-  "itemGroup.pockymods.pocky_mods": "Pocky Mods"
+  "itemGroup.pockymods.pocky_mods": "Pocky Mods",
+  "tooltip.vacpack.controls.hint": "Hold Shift for controls",
+  "tooltip.vacpack.controls.1": "Hold Use: vacuum items and small mobs",
+  "tooltip.vacpack.controls.2": "Attack: shoot the selected slot, hold to auto-fire",
+  "tooltip.vacpack.controls.3": "Empty slot + Attack: pulse wave, aim at the ground to jump",
+  "tooltip.vacpack.controls.4": "Big mobs float in the air stream - shoot to launch them",
+  "tooltip.vacpack.controls.5": "R or Sneak + Scroll: switch slot",
+  "advancements.vacpack.root.title": "Vacpack",
+  "advancements.vacpack.root.description": "Get a vacpack and start ranching",
+  "advancements.vacpack.vac_attack.title": "Vac Attack",
+  "advancements.vacpack.vac_attack.description": "Vacuum a mob into your tank",
+  "advancements.vacpack.slime_collector.title": "Slime Collector",
+  "advancements.vacpack.slime_collector.description": "Fill a whole tank slot with slimes",
+  "advancements.vacpack.return_to_sender.title": "Return to Sender",
+  "advancements.vacpack.return_to_sender.description": "Blow someone else's projectile back with a pulse wave"
 }

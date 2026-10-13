@@ -4,7 +4,6 @@
   "tooltip.vacpack.creative": "Творческий: бездонные слоты, стрельба без задержки, берёт любых мобов, кроме боссов",
   "tooltip.vacpack.empty": "Бак пуст",
   "tooltip.vacpack.slot": "%s x%s",
-  "tooltip.vacpack.controls": "Удерживайте «Использовать», чтобы всасывать, «Атаковать» — чтобы стрелять. Крупные мобы зависают в потоке — выстрел запускает их. Пустой слот даёт воздушный импульс. Слоты: R или Shift + колёсико.",
   "key.categories.vacpack": "Rancher's Vacpack",
   "key.vacpack.cycle_slot": "Следующий слот бака",
   "vacpack.configuration.title": "Настройки Rancher's Vacpack",
@@ -47,5 +46,19 @@
   "subtitles.vacpack.land": "Что-то приземляется",
   "vacpack.configuration.vacuum_babies": "Всасывать детёнышей",
   "vacpack.configuration.pulse_wind_burst": "Порыв ветра (рокетджамп)",
-  "itemGroup.pockymods.pocky_mods": "Pocky Mods"
+  "itemGroup.pockymods.pocky_mods": "Pocky Mods",
+  "tooltip.vacpack.controls.hint": "Удерживайте Shift, чтобы увидеть управление",
+  "tooltip.vacpack.controls.1": "Удерживать «Использовать»: всасывать предметы и маленьких мобов",
+  "tooltip.vacpack.controls.2": "«Атаковать»: выстрел из выбранного слота, удерживать для очереди",
+  "tooltip.vacpack.controls.3": "Пустой слот + «Атаковать»: воздушная волна, в землю - прыжок",
+  "tooltip.vacpack.controls.4": "Крупные мобы парят в потоке воздуха - выстрелите, чтобы запустить их",
+  "tooltip.vacpack.controls.5": "R или Shift + колесо: сменить слот",
+  "advancements.vacpack.root.title": "Вакпак",
+  "advancements.vacpack.root.description": "Получите вакпак и займитесь фермерством",
+  "advancements.vacpack.vac_attack.title": "Вак-атака",
+  "advancements.vacpack.vac_attack.description": "Засосите моба в бак",
+  "advancements.vacpack.slime_collector.title": "Коллекционер слизней",
+  "advancements.vacpack.slime_collector.description": "Заполните слизнями целый слот бака",
+  "advancements.vacpack.return_to_sender.title": "Вернуть отправителю",
+  "advancements.vacpack.return_to_sender.description": "Отбейте чужой снаряд воздушной волной"
 }
