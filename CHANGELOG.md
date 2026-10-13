@@ -4,7 +4,7 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.4.0] - Unreleased
+## [1.4.0] - 2026-10-13
 ### Added
 - Advancements in their own Vacpack tab: **Vac Attack** (vacuum a mob into your tank), **Slime Collector** (fill a
   whole tank slot with slimes) and **Return to Sender** (blow someone else's projectile back with a pulse wave).
