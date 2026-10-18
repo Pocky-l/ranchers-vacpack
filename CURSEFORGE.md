@@ -76,7 +76,7 @@ with Monomi Park.
 
 [![Petrichor: Rain & Storms](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/petrichor.png)](https://www.curseforge.com/minecraft/mc-mods/petrichor-rain-storms) **[Petrichor: Rain & Storms](https://www.curseforge.com/minecraft/mc-mods/petrichor-rain-storms)** - realistic rain, puddles, drips and branching lightning
 
-[![Rustling Leaves](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/rustling_leaves.png)](https://www.curseforge.com/minecraft/mc-mods/rustling-leaves) **[Rustling Leaves](https://www.curseforge.com/minecraft/mc-mods/rustling-leaves)** - falling leaves and leaf piles you can wade through, rake and blow away
+[![Rustling Leaves](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/rustling_leaves.png)](https://www.curseforge.com/minecraft/mc-mods/rustling-leaves) **[Rustling Leaves](https://www.curseforge.com/minecraft/mc-mods/rustling-leaves)** - falling leaves and leaf piles you can wade through and rake, client-side
 
 **💡 Light**
 
