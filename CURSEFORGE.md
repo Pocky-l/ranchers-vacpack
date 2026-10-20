@@ -94,6 +94,10 @@ with Monomi Park.
 
 [![Holy Staff](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/holy_staff.png)](https://www.curseforge.com/minecraft/mc-mods/holy-staff) **[Holy Staff](https://www.curseforge.com/minecraft/mc-mods/holy-staff)** - a healing staff with three skills and flying heal numbers
 
+**🔮 Magic**
+
+[![HexTale](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/hextale.png)](https://www.curseforge.com/minecraft/mc-mods/hextale) **[HexTale](https://www.curseforge.com/minecraft/mc-mods/hextale)** - hextech magic to research, distil and bind with runes, inspired by Arcane and Thaumcraft
+
 **⚡ Tech & energy**
 
 [![Mekanism Advanced Generators](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/mekanismadvancedgenerators.png)](https://www.curseforge.com/minecraft/mc-mods/mekanism-advancedgenerators) **[Mekanism Advanced Generators](https://www.curseforge.com/minecraft/mc-mods/mekanism-advancedgenerators)** - nine tiers of solar panels, big solar generators, cubes and cables for Mekanism
