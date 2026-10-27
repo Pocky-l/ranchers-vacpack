@@ -88,7 +88,7 @@ with Monomi Park.
 
 [![Turbo for Distant Horizons](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/dhturbo.png)](https://www.curseforge.com/minecraft/mc-mods/turbo-for-distant-horizons) **[Turbo for Distant Horizons](https://www.curseforge.com/minecraft/mc-mods/turbo-for-distant-horizons)** - Distant Horizons terrain generated several times faster
 
-[![Pocky Shaders](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/pocky_shaders.png)](https://www.curseforge.com/minecraft/mc-mods/pocky-shaders) **[Pocky Shaders](https://www.curseforge.com/minecraft/mc-mods/pocky-shaders)** - a cosy, natural shader pack that sets itself up
+[![Pocky Shaders](https://raw.githubusercontent.com/Pocky-l/ranchers-vacpack/main/docs/more-mods/pocky_shaders.png)](https://www.curseforge.com/minecraft/shaders/pocky-shaders) **[Pocky Shaders](https://www.curseforge.com/minecraft/shaders/pocky-shaders)** - a cosy, natural shader pack that shows the weather of these mods
 
 **⚔️ Gear & gameplay**
 
